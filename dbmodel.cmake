@@ -21,6 +21,8 @@ macro    (dbmodelInit
         "dbmodel.h")
     set(DBMODEL_SOURCES
         "dbmodel.cc")
+    set(DBDELEGATE_QT_MODS
+        Core Sql)
 
     pileSetSources(
         "${DBMODEL_INIT_NAME}"
