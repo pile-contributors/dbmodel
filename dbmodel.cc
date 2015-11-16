@@ -13,6 +13,9 @@
 #include <dbstruct/dbtable.h>
 #include <dbstruct/dbview.h>
 
+#include <QSql>
+#include <QSqlError>
+#include <QSqlQuery>
 
 /**
  * @class DbModel
@@ -55,6 +58,48 @@ void DbModel::setMeta (DbTaew * meta)
         loadMeta (meta);
     }
     DBMODEL_TRACE_EXIT;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbModel::selectMe ()
+{
+    DBMODEL_TRACE_ENTRY;
+
+    setJoinMode (QSqlRelationalTableModel::LeftJoin);
+    bool b_ret = QSqlRelationalTableModel::select ();
+    if (!b_ret) {
+        DBMODEL_DEBUGM("model->select failed: %s",
+                     TMP_A(lastError().text()));
+        DBMODEL_DEBUGM("    query: %s",
+                     TMP_A(query().lastQuery()));
+    }
+#ifdef DBMODEL_DEBUG
+    else {
+        DBMODEL_DEBUGM("model->select query: %s",
+                     TMP_A(query().lastQuery()));
+    }
+#endif
+
+    DBMODEL_TRACE_EXIT;
+    return b_ret;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbModel::setCurrentMarker (int column, int row)
+{
+    bool b_ret = false;
+    for (;;) {
+
+
+        /** @todo */
+
+
+        b_ret = true;
+        break;
+    }
+    return b_ret;
 }
 /* ========================================================================= */
 

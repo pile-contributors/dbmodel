@@ -30,6 +30,9 @@
 #    define DBMODEL_TRACE_EXIT
 #endif
 
+#ifndef TMP_A
+#   define TMP_A(__s__) __s__.toLatin1 ().constData ()
+#endif
 
 static inline void black_hole (...)
 {}

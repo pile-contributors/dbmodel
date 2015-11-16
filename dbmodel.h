@@ -55,6 +55,16 @@ public:
         return meta_;
     }
 
+    //! Select the model (retreive information using options).
+    bool
+    selectMe ();
+
+    //! Set the indicated .
+    bool
+    setCurrentMarker (
+            int column,
+            int row);
+
 protected:
 
 private:
