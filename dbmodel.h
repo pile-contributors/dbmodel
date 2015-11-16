@@ -20,6 +20,7 @@
 
 //! brief description
 class DBMODEL_EXPORT DbModel : public QSqlRelationalTableModel {
+    Q_OBJECT
 
     DbTaew * meta_; /**< the table or view */
 
@@ -41,11 +42,17 @@ public:
             DbTaew * meta);
 
     //! Give away the pointer and remove it from internal storage.
-    DbTaew *
+    inline DbTaew *
     takeMeta () {
         DbTaew * result = meta_;
         loadMeta (NULL);
         return result;
+    }
+
+    //! Get a pointer to meta object; ownership stays with this instance.
+    inline DbTaew *
+    metaTaew () {
+        return meta_;
     }
 
 protected:
