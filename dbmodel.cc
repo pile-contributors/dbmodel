@@ -90,6 +90,30 @@ DbModel::~DbModel()
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+bool DbModel::validateIndex (const QModelIndex & idx) const
+{
+    bool b_ret = false;
+    for (;;) {
+
+        if (idx.parent().isValid())
+            break;
+
+        int row = idx.row();
+        if ((row < 0) || (row >= rowCount()))
+            break;
+
+        int col = idx.column();
+        if ((col < 0) || (col >= columnCount()))
+            break;
+
+        b_ret = true;
+        break;
+    }
+    return b_ret;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
 /**
  * The model will NOT be valid after this call because the metadata for the
  * table is not set.
@@ -171,21 +195,30 @@ bool DbModel::selectMe ()
         return false;
     }
 
-    // main->setJoinMode (QSqlRelationalTableModel::LeftJoin);
-    QSqlTableModel * main = mainModel ();
-    bool b_ret = main->select ();
-    if (!b_ret) {
-        DBMODEL_DEBUGM("model->select failed: %s",
-                     TMP_A(main->lastError().text()));
-        DBMODEL_DEBUGM("    query: %s",
-                     TMP_A(main->query().lastQuery()));
+    bool b_ret = true;
+    foreach(const Tbl & tbl, tables_) {
+        QSqlTableModel * model = tbl.model;
+        if (model == NULL) {
+            b_ret = false;
+        } else {
+            bool loc_b_ret = model->select ();
+            if (!loc_b_ret) {
+                DBMODEL_DEBUGM("model->select failed: %s",
+                             TMP_A(model->lastError().text()));
+                DBMODEL_DEBUGM("    query: %s",
+                             TMP_A(model->query().lastQuery()));
+            }
+#           ifdef DBMODEL_DEBUG
+            else {
+                DBMODEL_DEBUGM("model->select query: %s",
+                             TMP_A(model->query().lastQuery()));
+            }
+#           endif
+            b_ret = b_ret && loc_b_ret;
+        }
     }
-#ifdef DBMODEL_DEBUG
-    else {
-        DBMODEL_DEBUGM("model->select query: %s",
-                     TMP_A(main->query().lastQuery()));
-    }
-#endif
+
+    // model->setJoinMode (QSqlRelationalTableModel::LeftJoin);
 
     DBMODEL_TRACE_EXIT;
     return b_ret;
@@ -235,15 +268,64 @@ bool DbModel::setCurrentMarker (int column, int row)
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
-Qt::ItemFlags DbModel::flags (const QModelIndex &index) const
+Qt::ItemFlags DbModel::flags (const QModelIndex &idx) const
 {
-    return Qt::NoItemFlags;
+    Qt::ItemFlags result = QAbstractTableModel::flags (idx);
+    for (;;) {
+        if (!validateIndex (idx))
+            break;
+
+        // data for this column in main table
+        Col column = mapping_.at (idx.column());
+
+        // Only allow editing if this is allowed in the model
+        if (!column.original_.read_only_) {
+            result = result | Qt::ItemIsEditable;
+        }
+
+        break;
+    }
+
+    return result;
 }
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
-QVariant DbModel::data (const QModelIndex &idx, int role) const
+QVariant DbModel::data (const QModelIndex & idx, int role) const
 {
+    for (;;) {
+        if (role != Qt::DisplayRole)
+            if (role != Qt::EditRole)
+                break;
+
+        if (!validateIndex (idx))
+            break;
+
+        // data for this column in main table
+        Col column = mapping_.at(idx.column());
+        QSqlTableModel * main_model = tables_.first().model;
+        if (main_model == NULL)
+            break;
+        QVariant main_value = main_model->data (
+                    main_model->index(idx.row(), column.table_index_));
+
+        // for simple cases this is it
+        if ((role == Qt::EditRole) || !column.isForeign()) {
+            return main_value;
+        }
+
+        // we have a value that is an index in another table
+        QSqlTableModel * model = column.table_->model;
+        if (model == NULL)
+            break;
+
+        //! @todo column.t_display_;
+
+
+
+        // return model->data (model->index(row, idx_mcol));
+        return main_value;
+    }
     return QVariant ();
 }
 /* ========================================================================= */
@@ -281,13 +363,13 @@ QVariant DbModel::headerData (
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
-bool DbModel::setData(const QModelIndex &index, const QVariant &value, int role)
+bool DbModel::setData(const QModelIndex &idx, const QVariant &value, int role)
 {
     return false;
 }
-/* ------------------------------------------------------------------------- */
-
 /* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
 int DbModel::rowCount (const QModelIndex &) const
 {
     return rowCount ();
@@ -301,7 +383,7 @@ int DbModel::columnCount (const QModelIndex &) const
 }
 /* ========================================================================= */
 
-/* ========================================================================= */
+/* ------------------------------------------------------------------------- */
 /**
  * This method exists because, for table-only models, we will never have
  * a parent.
@@ -391,6 +473,7 @@ bool DbModel::loadMeta (DbTaew * meta)
     bool b_ret = false;
     col_highlite_ = -1;
     row_highlite_ = -1;
+    beginResetModel ();
     if ((meta != NULL) && (db_ != NULL)) {
 
         // There's going to be at least this many columns.
@@ -415,17 +498,17 @@ bool DbModel::loadMeta (DbTaew * meta)
             if (col.isForeignKey ()) {
                 addForeignKeyColumn (col, i, col_idx);
             } else {
-                Col loc_col (col_idx, i, tables_.first());
+                Col loc_col (col, col_idx, i, tables_.first());
                 loc_col.t_display_ = i;
-                mapping_.append (loc_col);
                 loc_col.label_ = loc_col.table_->meta->columnLabel (loc_col.t_display_);
                 //setHeaderData(col_idx, Qt::Vertical, QString("X %1").arg (col_idx));
+                mapping_.append (loc_col);
                 ++col_idx;
             }
         }
-
         b_ret = true;
     }
+    endResetModel ();
     DBMODEL_TRACE_EXIT;
     return b_ret;
 }
@@ -502,7 +585,7 @@ void DbModel::clearTables ()
 
 /* ------------------------------------------------------------------------- */
 void DbModel::addForeignKeyColumn (
-        const DbColumn & col, int index, int & col_idx)
+        const DbColumn & col, int idx, int & col_idx)
 {
     DBMODEL_TRACE_ENTRY;
 
@@ -523,7 +606,7 @@ void DbModel::addForeignKeyColumn (
     foreach(const QString & s_iter, col.foreign_ref_) {
 
         // new column to be added to mapping_ array
-        Col loc_col (col_idx, index, secondary);
+        Col loc_col (col, col_idx, idx, secondary);
         if (secondary.isValid() && (key_col != -1)) {
             loc_col.t_primary_ = key_col;
             loc_col.t_display_ = secondary.meta->columnIndex (
@@ -541,8 +624,8 @@ void DbModel::addForeignKeyColumn (
             // No further intervention is required.
         }
 
-        mapping_.append (loc_col);
         loc_col.label_ = loc_col.table_->meta->columnLabel (loc_col.t_display_);
+        mapping_.append (loc_col);
         //setHeaderData(col_idx, Qt::Vertical, QString("Y %1").arg (col_idx));
         ++col_idx;
     }

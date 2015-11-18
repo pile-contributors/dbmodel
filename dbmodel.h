@@ -78,17 +78,19 @@ private:
             table_(NULL),
             t_primary_(-1),
             t_display_(-1),
-            label_()
+            label_(),
+            original_()
         {}
 
         //! Default constructor creates a non-foreign key column.
-        Col (int user_index, int table_index, const Tbl & table) :
+        Col (const DbColumn & source, int user_index, int table_index, const Tbl & table) :
             user_index_(user_index),
             table_index_(table_index),
             table_(&table),
             t_primary_(-1),
             t_display_(-1),
-            label_()
+            label_(),
+            original_(source)
         {}
 
         //! copy constructor
@@ -98,7 +100,8 @@ private:
             table_(other.table_),
             t_primary_(other.t_primary_),
             t_display_(other.t_display_),
-            label_(other.label_)
+            label_(other.label_),
+            original_(other.original_)
         {}
 
         //! assignment operator
@@ -109,6 +112,7 @@ private:
             t_primary_ = other.t_primary_;
             t_display_ = other.t_display_;
             label_ = other.label_;
+            original_ = other.original_;
             return *this;
         }
 
@@ -119,6 +123,7 @@ private:
         int t_primary_; /**< column index in referenced table (-1 indicates this is a local column) of the key */
         int t_display_; /**< column index in referenced table (-1 indicates this is a local column) of the display */
         QString label_; /**< cached label for the header */
+        DbColumn original_; /**< original column data*/
 
         //! Tell f this column is foreign or not.
         bool
@@ -147,6 +152,8 @@ public:
             DbStruct * db,
             int component,
             QObject * parent = NULL);
+
+    Q_DISABLE_COPY(DbModel)
 
     //! Destructor.
     virtual ~DbModel();
@@ -305,6 +312,11 @@ public:
         const QModelIndex &index,
         const QVariant &value,
         int role = Qt::EditRole);
+
+    //! Tell if an index is valid for this model.
+    bool
+    validateIndex (
+            const QModelIndex &idx) const;
 
 protected:
 
