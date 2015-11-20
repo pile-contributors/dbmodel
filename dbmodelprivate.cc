@@ -239,6 +239,23 @@ int DbModelPrivate::columnCount () const
 
 /* ------------------------------------------------------------------------- */
 /**
+ * This method exists because, for table-only models, we will never have
+ * a parent.
+ *
+ * @return number of columns
+ */
+void DbModelPrivate::setDatabase (DbStruct * value)
+{
+    DbStruct * old_db = takeDatabase();
+    if (old_db != NULL) {
+        delete old_db;
+    }
+    db_ = value;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+/**
  * To set the filter for this model's main table call the method without the
  * \b table_index parameter.
  *

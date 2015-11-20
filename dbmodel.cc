@@ -42,6 +42,8 @@ DbModel::DbModel(DbStruct * db, DbTaew * meta, QObject * parent) :
     row_highlite_(-1)
 {
     DBMODEL_TRACE_ENTRY;
+    setSourceModel(impl);
+    setSortCaseSensitivity (Qt::CaseInsensitive);
     DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -62,6 +64,8 @@ DbModel::DbModel(DbStruct * db, int component, QObject * parent) :
     row_highlite_(-1)
 {
     DBMODEL_TRACE_ENTRY;
+    setSourceModel(impl);
+    setSortCaseSensitivity (Qt::CaseInsensitive);
     DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -173,6 +177,7 @@ bool DbModel::selectMe ()
  */
 int DbModel::rowCount () const
 {
+    DBMODEL_DEBUGM("%d rows\n", impl->rowCount());
     return impl->rowCount();
 }
 /* ========================================================================= */
@@ -349,3 +354,35 @@ bool DbModel::setCurrentMarker (int column, int row)
     return b_ret;
 }
 /* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbModel::lessThan (const QModelIndex &left, const QModelIndex &right) const
+{
+    QVariant leftData = sourceModel()->data(left);
+    QVariant rightData = sourceModel()->data(right);
+
+    if (leftData.type() == QVariant::DateTime) {
+        return leftData.toDateTime() < rightData.toDateTime();
+    } else if (leftData.type() == QVariant::Date) {
+        return leftData.toDate() < rightData.toDate();
+    } else if (leftData.type() == QVariant::Time) {
+        return leftData.toTime() < rightData.toTime();
+    } else {
+        return QSortFilterProxyModel::lessThan (left, right);
+        /*
+        static QRegExp emailPattern("[\\w\\.]*@[\\w\\.]*)");
+
+        QString leftString = leftData.toString();
+        if(left.column() == 1 && emailPattern.indexIn(leftString) != -1)
+            leftString = emailPattern.cap(1);
+
+        QString rightString = rightData.toString();
+        if(right.column() == 1 && emailPattern.indexIn(rightString) != -1)
+            rightString = emailPattern.cap(1);
+
+        return QString::localeAwareCompare(leftString, rightString) < 0;
+        */
+    }
+}
+/* ========================================================================= */
+

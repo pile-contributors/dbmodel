@@ -89,6 +89,13 @@ public:
     int
     columnCount () const;
 
+    //! Custom sorting.
+    bool
+    lessThan (
+        const QModelIndex &left,
+        const QModelIndex &right) const;
+
+
     //! Retreive the database. Ownership of returned pointer stays
     //! with this instance.
     DbStruct *
