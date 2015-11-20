@@ -18,9 +18,14 @@ macro    (dbmodelInit
 
     # compose the list of headers and sources
     set(DBMODEL_HEADERS
-        "dbmodel.h")
+        "dbmodel.h"
+        "dbmodeltbl.h"
+        "dbmodelcol.h")
     set(DBMODEL_SOURCES
-        "dbmodel.cc")
+        "dbmodel.cc"
+        "dbmodeltbl.cc"
+        "dbmodelprivate.cc"
+        "dbmodelcol.cc")
     set(DBDELEGATE_QT_MODS
         Core Sql)
 

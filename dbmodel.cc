@@ -8,7 +8,7 @@
  */
 
 #include "dbmodel.h"
-#include "dbmodel-private.h"
+#include "dbmodelprivate.h"
 
 #include <dbstruct/dbtable.h>
 #include <dbstruct/dbview.h>
@@ -36,15 +36,12 @@
  * \param parent the parent QObject
  */
 DbModel::DbModel(DbStruct * db, DbTaew * meta, QObject * parent) :
-    QAbstractTableModel(parent),
-    db_(db),
-    mapping_(),
-    tables_(),
+    QSortFilterProxyModel(parent),
+    impl(new DbModelPrivate (db, meta, this)),
     col_highlite_(-1),
     row_highlite_(-1)
 {
     DBMODEL_TRACE_ENTRY;
-    loadMeta (meta);
     DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -59,19 +56,12 @@ DbModel::DbModel(DbStruct * db, DbTaew * meta, QObject * parent) :
  * \param parent the parent QObject
  */
 DbModel::DbModel(DbStruct * db, int component, QObject * parent) :
-    QAbstractTableModel(parent),
-    db_(db),
-    mapping_(),
-    tables_(),
+    QSortFilterProxyModel(parent),
+    impl(new DbModelPrivate (db, component, this)),
     col_highlite_(-1),
     row_highlite_(-1)
 {
     DBMODEL_TRACE_ENTRY;
-    DbTaew * meta = NULL;
-    if (db != NULL) {
-        meta = db->metaDatabase()->taew (component);
-    }
-    loadMeta (meta);
     DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -83,55 +73,14 @@ DbModel::DbModel(DbStruct * db, int component, QObject * parent) :
 DbModel::~DbModel()
 {
     DBMODEL_TRACE_ENTRY;
-    terminateMeta ();
-    setDatabase(NULL);
     DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
-bool DbModel::validateIndex (const QModelIndex & idx) const
+bool DbModel::isValid() const
 {
-    bool b_ret = false;
-    for (;;) {
-
-        if (idx.parent().isValid())
-            break;
-
-        int row = idx.row();
-        if ((row < 0) || (row >= rowCount()))
-            break;
-
-        int col = idx.column();
-        if ((col < 0) || (col >= columnCount()))
-            break;
-
-        b_ret = true;
-        break;
-    }
-    return b_ret;
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-/**
- * The model will NOT be valid after this call because the metadata for the
- * table is not set.
- *
- *
- *
- * @param value the database to use; this instance takes ownership of
- * the pointer and delete will be called in the destructor.
- */
-void DbModel::setDatabase (DbStruct * value)
-{
-    if (db_ == value)
-        return;
-    if (db_ != NULL) {
-        delete db_;
-    }
-    db_ = value;
-    setMeta (NULL);
+    return impl->isValid ();
 }
 /* ========================================================================= */
 
@@ -150,10 +99,9 @@ void DbModel::setDatabase (DbStruct * value)
 void DbModel::setMeta (DbTaew * meta)
 {
     DBMODEL_TRACE_ENTRY;
-    if ((db_ != NULL) && (meta != metaTaew ())) {
-        terminateMeta ();
-        loadMeta (meta);
-    }
+    impl->setMeta (meta);
+    col_highlite_ = -1;
+    row_highlite_ = -1;
     DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -179,49 +127,184 @@ void DbModel::setMeta (DbTaew * meta)
 void DbModel::setMeta (DbStruct * database, DbTaew * meta)
 {
     DBMODEL_TRACE_ENTRY;
-    setDatabase (database);
-    setMeta (meta);
+    impl->setMeta (database, meta);
+    col_highlite_ = -1;
+    row_highlite_ = -1;
     DBMODEL_TRACE_EXIT;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+DbTaew * DbModel::takeMeta ()
+{
+    col_highlite_ = -1;
+    row_highlite_ = -1;
+    return impl->takeMeta();
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+DbTaew * DbModel::metaTaew () const
+{
+    return impl->metaTaew();
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+QSqlTableModel * DbModel::mainModel () const
+{
+    return impl->mainModel();
 }
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
 bool DbModel::selectMe ()
 {
-    DBMODEL_TRACE_ENTRY;
+    return impl->selectMe();
+}
+/* ========================================================================= */
 
-    if (!isValid()) {
-        DBMODEL_DEBUGM("Attempt to select invalid model");
-        return false;
-    }
+/* ------------------------------------------------------------------------- */
+/**
+ * This method exists because, for table-only models, we will never have
+ * a parent.
+ *
+ * @return number of rows
+ */
+int DbModel::rowCount () const
+{
+    return impl->rowCount();
+}
+/* ========================================================================= */
 
-    bool b_ret = true;
-    foreach(const Tbl & tbl, tables_) {
-        QSqlTableModel * model = tbl.model;
-        if (model == NULL) {
-            b_ret = false;
-        } else {
-            bool loc_b_ret = model->select ();
-            if (!loc_b_ret) {
-                DBMODEL_DEBUGM("model->select failed: %s",
-                             TMP_A(model->lastError().text()));
-                DBMODEL_DEBUGM("    query: %s",
-                             TMP_A(model->query().lastQuery()));
-            }
-#           ifdef DBMODEL_DEBUG
-            else {
-                DBMODEL_DEBUGM("model->select query: %s",
-                             TMP_A(model->query().lastQuery()));
-            }
-#           endif
-            b_ret = b_ret && loc_b_ret;
-        }
-    }
+/* ------------------------------------------------------------------------- */
+/**
+ * This method exists because, for table-only models, we will never have
+ * a parent.
+ *
+ * @return number of columns
+ */
+int DbModel::columnCount () const
+{
+    return impl->columnCount ();
+}
+/* ========================================================================= */
 
-    // model->setJoinMode (QSqlRelationalTableModel::LeftJoin);
+/* ------------------------------------------------------------------------- */
+DbStruct * DbModel::database () const
+{
+    return impl->database();
+}
+/* ========================================================================= */
 
-    DBMODEL_TRACE_EXIT;
-    return b_ret;
+/* ------------------------------------------------------------------------- */
+/**
+ * The model will NOT be valid after this call because the metadata for the
+ * table is not set.
+ *
+ * @param value the database to use; this instance takes ownership of
+ * the pointer and delete will be called in the destructor.
+ */
+void DbModel::setDatabase (DbStruct * value)
+{
+    return impl->setDatabase (value);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+DbStruct * DbModel::takeDatabase ()
+{
+    col_highlite_ = -1;
+    row_highlite_ = -1;
+    return impl->database();
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+const DbModelCol & DbModel::columnData (int index) const
+{
+    return impl->columnData (index);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+const DbModelTbl & DbModel::tableData (int table_index) const
+{
+    return impl->tableData (table_index);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+/**
+ * To set the filter for this model's main table call the method without the
+ * \b table_index parameter.
+ *
+ * @param filter The filter to apply
+ * @param table_index the index of the table
+ * @return false if the index is out of bounds or the model does not exist
+ */
+bool DbModel::setFilter (const QString & filter, int table_index)
+{
+    return impl->setFilter (filter, table_index);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+/**
+ * This overload searches for the name in internal list to identify the
+ * index, then calls the base method.
+ *
+ * @param filter The filter to apply
+ * @param table
+ * @return false if the name was not found or the model is invalid
+ */
+bool DbModel::setFilter (const QString & filter, const QString & table)
+{
+    return impl->setFilter (filter, table);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+/**
+ * To set the sorting order for this model's main table call
+ * the method without the \b table_index parameter.
+ *
+ * @param column the column to use for sorting;
+ * @param order the order to apply to sid column
+ * @param table_index the index of the table
+ * @return false if the index is out of bounds or the model does not exist
+ */
+bool DbModel::setOrder (int column, Qt::SortOrder order, int table_index)
+{
+    return impl->setOrder (column, order, table_index);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+/**
+ * This overload searches for the name in internal list to identify the
+ * index, then calls the base method.
+ *
+ * @param filter The filter to apply
+ * @param table
+ * @return false if the name was not found or the model is invalid
+ */
+bool DbModel::setOrder (int column, Qt::SortOrder order, const QString & table)
+{
+    return impl->setOrder (column, order, table);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+/**
+ * The method iterates internal list in search for the name.
+ *
+ * @param table name of the table to search for
+ * @return -1 if it was not found, 0 based index otherwise
+ */
+int DbModel::findTable (const QString &table)
+{
+    return impl->findTable (table);
 }
 /* ========================================================================= */
 
@@ -264,372 +347,5 @@ bool DbModel::setCurrentMarker (int column, int row)
         break;
     }
     return b_ret;
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-Qt::ItemFlags DbModel::flags (const QModelIndex &idx) const
-{
-    Qt::ItemFlags result = QAbstractTableModel::flags (idx);
-    for (;;) {
-        if (!validateIndex (idx))
-            break;
-
-        // data for this column in main table
-        Col column = mapping_.at (idx.column());
-
-        // Only allow editing if this is allowed in the model
-        if (!column.original_.read_only_) {
-            result = result | Qt::ItemIsEditable;
-        }
-
-        break;
-    }
-
-    return result;
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-QVariant DbModel::data (const QModelIndex & idx, int role) const
-{
-    for (;;) {
-        if (role != Qt::DisplayRole)
-            if (role != Qt::EditRole)
-                break;
-
-        if (!validateIndex (idx))
-            break;
-
-        // data for this column in main table
-        Col column = mapping_.at(idx.column());
-        QSqlTableModel * main_model = tables_.first().model;
-        if (main_model == NULL)
-            break;
-        QVariant main_value = main_model->data (
-                    main_model->index(idx.row(), column.table_index_));
-
-        // for simple cases this is it
-        if ((role == Qt::EditRole) || !column.isForeign()) {
-            return main_value;
-        }
-
-        // we have a value that is an index in another table
-        QSqlTableModel * model = column.table_->model;
-        if (model == NULL)
-            break;
-
-        //! @todo column.t_display_;
-
-
-
-        // return model->data (model->index(row, idx_mcol));
-        return main_value;
-    }
-    return QVariant ();
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-QVariant DbModel::headerData (
-        int section, Qt::Orientation orientation, int role) const
-{
-    for (;;) {
-        // we only handle text
-        if (role != Qt::DisplayRole)
-            break;
-
-        // we only handle horizontal orientation
-        if (orientation != Qt::Horizontal)
-            break;
-
-        // column index should be in valid interval
-        if ((section < 0) || (section > columnCount()))
-            break;
-/*
-        Col & col = ((DbModel*)this)->mapping_[section];
-        if (col.label_.isEmpty()) {
-            if (!col.table_->isValid())
-                break;
-
-            col.label_ = col.table_->meta->columnLabel (col.t_display_);
-        }
-*/
-        const Col & col = mapping_[section];
-        return col.label_;
-    }
-    return QAbstractTableModel::headerData (section, orientation, role);
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-bool DbModel::setData(const QModelIndex &idx, const QVariant &value, int role)
-{
-    return false;
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-int DbModel::rowCount (const QModelIndex &) const
-{
-    return rowCount ();
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-int DbModel::columnCount (const QModelIndex &) const
-{
-    return columnCount ();
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-/**
- * This method exists because, for table-only models, we will never have
- * a parent.
- *
- * @return number of rows
- */
-int DbModel::rowCount () const
-{
-    if (!isValid())
-        return 0;
-    return mainModel ()->rowCount();
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-/**
- * This method exists because, for table-only models, we will never have
- * a parent.
- *
- * @return number of columns
- */
-int DbModel::columnCount () const
-{
-    return mapping_.count ();
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-/**
- * Sets the caption for a horizontal header for the specified \a role to
- * \a value. This is useful if the model is used to
- * display data in a view (e.g., QTableView).
- *
- * Returns \c true if \a orientation is Qt::Horizontal and
- * the \a section refers to a valid section; otherwise returns
- * false.
- *
- * Note that this function cannot be used to modify values in the
- * database since the model is read-only.
- *
- */
-bool DbModel::setHeaderData (
-        int section, Qt::Orientation orientation,
-        const QVariant & value, int role)
-{
-    if (orientation != Qt::Horizontal || section < 0 || columnCount() <= section)
-        return false;
-    if (role != Qt::DisplayRole)
-        if (role != Qt::EditRole)
-            return false;
-
-    Col & col = mapping_[section];
-    col.label_ = value.toString ();
-    emit headerDataChanged (orientation, section, section);
-    return true;
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-/**
- * Removes the metadata information and any associated resources.
- */
-void DbModel::terminateMeta ()
-{
-    DBMODEL_TRACE_ENTRY;
-    clearTables ();
-    DBMODEL_TRACE_EXIT;
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-/**
- * This is a low level method. Use `setMeta()` to change current table.
- *
- * The internal workings of the model (like marked cell) will be
- * altered even if the method returns false (for example if
- * the \b meta parameter is NULL).
- *
- * @param meta the table to load; may be NULL to bring the model in
- * invalid state. A future call with a non-NULL value will make it valid again.
- *
- * @return true if the model was loaded
- */
-bool DbModel::loadMeta (DbTaew * meta)
-{
-    DBMODEL_TRACE_ENTRY;
-    bool b_ret = false;
-    col_highlite_ = -1;
-    row_highlite_ = -1;
-    beginResetModel ();
-    if ((meta != NULL) && (db_ != NULL)) {
-
-        // There's going to be at least this many columns.
-        mapping_.reserve (meta->columnCount ());
-
-        // inform underlyng table about the table we're gonna use
-        QSqlTableModel * main = new QSqlTableModel (this, db_->database());
-        main->setTable (meta->tableName());
-
-        // our table is always at position 0
-        assert(tables_.count() == 0);
-        Tbl this_table;
-        this_table.model = main;
-        this_table.meta = meta;
-        tables_.append (this_table);
-
-        // create the columns as we go
-        int i_max = meta->columnCount();
-        int col_idx = 0;
-        for (int i = 0; i < i_max; ++i) {
-            DbColumn col = meta->columnCtor (i);
-            if (col.isForeignKey ()) {
-                addForeignKeyColumn (col, i, col_idx);
-            } else {
-                Col loc_col (col, col_idx, i, tables_.first());
-                loc_col.t_display_ = i;
-                loc_col.label_ = loc_col.table_->meta->columnLabel (loc_col.t_display_);
-                //setHeaderData(col_idx, Qt::Vertical, QString("X %1").arg (col_idx));
-                mapping_.append (loc_col);
-                ++col_idx;
-            }
-        }
-        b_ret = true;
-    }
-    endResetModel ();
-    DBMODEL_TRACE_EXIT;
-    return b_ret;
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-/**
- * This is a low level method.
- *
- * It should not be entered if the database is not valid.
- *
- * Locates a table by name; if not found in internal cache it creates a new
- * one and attempts to initialize it from the database. If the database
- * does not contain a table with this name returned instance will be invalid
- * but it will exist nonetheless.
- *
- * @return a reference inside `tables_`
- */
-const DbModel::Tbl & DbModel::table (const QString & name)
-{
-    DBMODEL_TRACE_ENTRY;
-    assert(db_ != NULL);
-
-    // attempt to locate it
-    int i = 0;
-    foreach(const Tbl & titer, tables_) {
-        if (!titer.meta->tableName().compare(name)) {
-            assert(i != 0);
-            // The method is used to find related tables.
-            // A table should not have a relation with itself (is unnatural :).
-            return titer;
-        }
-        ++i;
-    }
-
-    // not found so add a new one
-    Tbl new_tbl;
-    new_tbl.meta = db_->metaDatabase ()->taew (name);
-    if (new_tbl.meta == NULL) {
-        new_tbl.model = NULL;
-        DBMODEL_DEBUGM("The database does not contain a table called %s",
-                       TMP_A(name));
-    } else {
-        new_tbl.model = new_tbl.meta->sqlModel (db_->database(), this);
-    }
-    tables_.append (new_tbl);
-
-    DBMODEL_TRACE_EXIT;
-    return tables_.last();
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-void DbModel::clearTables ()
-{
-    DBMODEL_TRACE_ENTRY;
-    int i_max = tables_.count();
-    for (int i = 0; i < i_max; ++i) {
-        Tbl & crt = tables_[i];
-        if (crt.meta != NULL) {
-            delete crt.meta;
-            crt.meta = NULL;
-        }
-        if (crt.model != NULL) {
-            crt.model->deleteLater ();
-            crt.model = NULL;
-        }
-    }
-    tables_.clear();
-    mapping_.clear();
-    DBMODEL_TRACE_EXIT;
-}
-/* ========================================================================= */
-
-/* ------------------------------------------------------------------------- */
-void DbModel::addForeignKeyColumn (
-        const DbColumn & col, int idx, int & col_idx)
-{
-    DBMODEL_TRACE_ENTRY;
-
-    // attempt to locate the secondary table in the database
-    const DbModel::Tbl & secondary = table (col.foreign_table_);
-    int key_col = -1;
-    if (secondary.isValid()) {
-        key_col = secondary.meta->columnIndex (col.foreign_key_);
-        if (key_col == -1) {
-            DBMODEL_DEBUGM("Key column %s was not "
-                           "found in table %s",
-                           TMP_A(col.foreign_key_),
-                           TMP_A(secondary.meta->tableName()));
-        }
-    }
-
-    // all display columns will belong to this table
-    foreach(const QString & s_iter, col.foreign_ref_) {
-
-        // new column to be added to mapping_ array
-        Col loc_col (col, col_idx, idx, secondary);
-        if (secondary.isValid() && (key_col != -1)) {
-            loc_col.t_primary_ = key_col;
-            loc_col.t_display_ = secondary.meta->columnIndex (
-                        s_iter);
-            if (loc_col.t_display_ == -1) {
-                DBMODEL_DEBUGM("Display column %s was not "
-                               "found in table %s",
-                               TMP_A(s_iter),
-                               TMP_A(secondary.meta->tableName()));
-                loc_col.t_display_ = key_col;
-            }
-        } else {
-            // If secondary is not valid or key column was not
-            // found the id column will be presented to the user.
-            // No further intervention is required.
-        }
-
-        loc_col.label_ = loc_col.table_->meta->columnLabel (loc_col.t_display_);
-        mapping_.append (loc_col);
-        //setHeaderData(col_idx, Qt::Vertical, QString("Y %1").arg (col_idx));
-        ++col_idx;
-    }
-
-    DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
