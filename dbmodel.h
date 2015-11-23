@@ -15,6 +15,7 @@
 #include <dbmodel/dbmodeltbl.h>
 
 #include <QSql>
+#include <QSqlRecord>
 #include <QSortFilterProxyModel>
 #include <QSqlDatabase>
 #include <QVector>
@@ -151,6 +152,11 @@ public:
     int
     findTable (
             const QString & table);
+
+    //! Get a record for a row
+    QSqlRecord
+    record (
+            int row) const;
 
 
     /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */

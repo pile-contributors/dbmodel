@@ -34,6 +34,11 @@
 //
 /*  DEFINITIONS    --------------------------------------------------------- */
 
+QT_BEGIN_NAMESPACE
+class QComboBox;
+class QVariant;
+QT_END_NAMESPACE
+
 class DbModelTbl;
 
 /*  DEFINITIONS    ========================================================= */
@@ -103,6 +108,13 @@ public:
     isForeign () const {
         return t_primary_ != -1;
     }
+
+    //! Set a combobox to work with this column's data.
+    bool
+    setCombo (
+        QComboBox * control,
+        const QVariant & key) const;
+
 
     /*  FUNCTIONS    ======================================================= */
     //

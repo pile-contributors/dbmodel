@@ -221,7 +221,7 @@ DbStruct * DbModel::takeDatabase ()
 {
     col_highlite_ = -1;
     row_highlite_ = -1;
-    return impl->database();
+    return impl->takeDatabase();
 }
 /* ========================================================================= */
 
@@ -310,6 +310,14 @@ bool DbModel::setOrder (int column, Qt::SortOrder order, const QString & table)
 int DbModel::findTable (const QString &table)
 {
     return impl->findTable (table);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+QSqlRecord DbModel::record(int row) const
+{
+    QModelIndex inimpl = mapToSource (index(row, 0));
+    return impl->record (inimpl.row());
 }
 /* ========================================================================= */
 

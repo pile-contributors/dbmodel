@@ -24,6 +24,7 @@
 /*  INCLUDES    ------------------------------------------------------------ */
 
 #include <QAbstractTableModel>
+#include <QList>
 
 #include <dbmodel/dbmodel-config.h>
 #include <dbmodel/dbmodelcol.h>
@@ -87,8 +88,6 @@ class DbModelPrivate : public QAbstractTableModel {
     //
     /*  DEFINITIONS    ----------------------------------------------------- */
 
-
-
     /*  DEFINITIONS    ===================================================== */
     //
     //
@@ -99,9 +98,9 @@ class DbModelPrivate : public QAbstractTableModel {
 private:
 
     DbStruct * db_; /**< The database we're connecting to. */
-    QVector<DbModelCol> mapping_; /**< one entry for each column mapping between
+    QList<DbModelCol> mapping_; /**< one entry for each column mapping between
                              user-indices and internal models */
-    QVector<DbModelTbl> tables_; /**< the list of tables referenced by this model */
+    QList<DbModelTbl> tables_; /**< the list of tables referenced by this model */
 
     /*  DATA    ============================================================ */
     //
@@ -254,22 +253,15 @@ public:
             Qt::SortOrder order,
             const QString & table);
 
-
     //! Find the index of a model identified by its name.
     int
     findTable (
             const QString & table);
 
-
-
-
-
-
-
-
-
-
-
+    //! Get a record for a row
+    QSqlRecord
+    record (
+            int row) const;
 
 
     /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
@@ -321,6 +313,20 @@ public:
 
         setOrder (column, order);
     }
+
+    //! Convert the data for the user.
+    static QVariant
+    formattedData (
+            const DbColumn &colorig,
+            const QVariant &original_value);
+
+    //! Remove a number of rows
+    bool
+    removeRows (
+        int row,
+        int count,
+        const QModelIndex &parent);
+
 
 protected:
 

@@ -40,6 +40,7 @@
 
 #include <QVector>
 #include <QSortFilterProxyModel>
+#include <QCoreApplication>
 
 #include <assert.h>
 
@@ -118,7 +119,6 @@ DbModelPrivate::~DbModelPrivate()
 }
 /* ========================================================================= */
 
-
 /* ------------------------------------------------------------------------- */
 /**
  * A call to this functionammounts to a complete change in the data that is
@@ -178,7 +178,7 @@ bool DbModelPrivate::selectMe ()
         DBMODEL_DEBUGM("Attempt to select invalid model");
         return false;
     }
-
+    beginResetModel ();
     bool b_ret = true;
     foreach(const DbModelTbl & tbl, tables_) {
         QSqlTableModel * model = tbl.model;
@@ -201,7 +201,7 @@ bool DbModelPrivate::selectMe ()
             b_ret = b_ret && loc_b_ret;
         }
     }
-
+    endResetModel ();
     // model->setJoinMode (QSqlRelationalTableModel::LeftJoin);
 
     DBMODEL_TRACE_EXIT;
@@ -460,6 +460,145 @@ Qt::ItemFlags DbModelPrivate::flags (const QModelIndex &idx) const
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+QVariant DbModelPrivate::formattedData (
+        const DbColumn & colorig, const QVariant & original_value)
+{
+    QVariant result = original_value;
+    switch (colorig.datatype_) {
+    case DbColumn::DTY_DATE: {
+        // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
+        result = result.toDate().toString(
+                    QCoreApplication::translate("UserTime", "yyyy-MMM-dd"));
+        break; }
+    case DbColumn::DTY_TIME: {
+        // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
+        result = result.toTime().toString(
+            QCoreApplication::translate(
+                "UserTime", "h:m:s"));
+        break; }
+    case DbColumn::DTY_DATETIME: {
+        // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
+        result = result.toDateTime().toString(
+                QCoreApplication::translate(
+                    "UserTime", "yyyy-MMM-dd h:m:s"));
+        break; }
+    case DbColumn::DTY_SMALLINT:
+    case DbColumn::DTY_BIGINT:
+    case DbColumn::DTY_TINYINT:
+    case DbColumn::DTY_INTEGER: {
+        if (!colorig.original_format_.isEmpty()) {
+            result = QString("%1").arg(
+                        result.toLongLong(),
+                        colorig.format_.width_,
+                        colorig.precision_,
+                        colorig.fill_char_);
+        }
+        break; }
+    case DbColumn::DTY_REAL:
+    case DbColumn::DTY_MONEY:
+    case DbColumn::DTY_SMALLMONEY:
+    case DbColumn::DTY_NUMERIC:
+    case DbColumn::DTY_NUMERICSCALE:
+    case DbColumn::DTY_FLOAT:
+    case DbColumn::DTY_DECIMALSCALE:
+    case DbColumn::DTY_DECIMAL: {
+        if (!colorig.original_format_.isEmpty()) {
+            result = QString("%1").arg(
+                        result.toReal(),
+                        colorig.format_.width_,
+                        colorig.nr_format_,
+                        colorig.precision_,
+                        colorig.fill_char_);
+        }
+        break;}
+    case DbColumn::DTY_BIT: {
+        switch (colorig.format_.bit_) {
+        case DbColumn::BF_YES_CAMEL: {
+            result = result.toBool() ?
+                        QCoreApplication::translate("DbModel", "Yes") :
+                        QCoreApplication::translate("DbModel", "No");
+            break; }
+        case DbColumn::BF_YES_LOWER: {
+            result = result.toBool() ?
+                        QCoreApplication::translate("DbModel", "yes") :
+                        QCoreApplication::translate("DbModel", "no");
+            break; }
+        case DbColumn::BF_YES_UPPER: {
+            result = result.toBool() ?
+                        QCoreApplication::translate("DbModel", "YES") :
+                        QCoreApplication::translate("DbModel", "NO");
+            break; }
+        case DbColumn::BF_ON_CAMEL: {
+            result = result.toBool() ?
+                        QCoreApplication::translate("DbModel", "On") :
+                        QCoreApplication::translate("DbModel", "Off");
+            break; }
+        case DbColumn::BF_ON_LOWER: {
+            result = result.toBool() ?
+                        QCoreApplication::translate("DbModel", "on") :
+                        QCoreApplication::translate("DbModel", "off");
+            break; }
+        case DbColumn::BF_ON_UPPER: {
+            result = result.toBool() ?
+                        QCoreApplication::translate("DbModel", "ON") :
+                        QCoreApplication::translate("DbModel", "OFF");
+            break; }
+        case DbColumn::BF_TRUE_CAMEL: {
+            result = result.toBool() ?
+                        QCoreApplication::translate("DbModel", "True") :
+                        QCoreApplication::translate("DbModel", "False");
+            break; }
+        case DbColumn::BF_TRUE_LOWER: {
+            result = result.toBool() ?
+                        QCoreApplication::translate("DbModel", "true") :
+                        QCoreApplication::translate("DbModel", "false");
+            break; }
+        case DbColumn::BF_TRUE_UPPER: {
+            result = result.toBool() ?
+                        QCoreApplication::translate("DbModel", "TRUE") :
+                        QCoreApplication::translate("DbModel", "FALSE");
+            break; }
+        case DbColumn::BF_Y_UPPER: {
+            result = result.toBool() ?
+                        QCoreApplication::translate("DbModel", "Y") :
+                        QCoreApplication::translate("DbModel", "N");
+            break; }
+        case DbColumn::BF_T_UPPER: {
+            result = result.toBool() ?
+                        QCoreApplication::translate("DbModel", "T") :
+                        QCoreApplication::translate("DbModel", "F");
+            break; }
+        default: // DbColumn::BF_STRING_ON
+            result = result.toBool() ?
+                        colorig.original_format_ :
+                        QString();
+        }
+
+        break;}
+    default: break;
+    };
+
+    return result;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbModelPrivate::removeRows (int row, int count, const QModelIndex &)
+{
+    if (!isValid())
+        return false;
+    if (tables_.first().model->removeRows (row, count)) {
+        DBMODEL_DEBUGM ("%d row(s) removed starting at %d", count, row);
+        return true;
+    } else {
+        DBMODEL_DEBUGM ("%d row(s) starting at %d could not be removed",
+                        count, row);
+        return false;
+    }
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
 QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
 {
     for (;;) {
@@ -471,16 +610,24 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
             break;
 
         // data for this column in main table
-        DbModelCol column = mapping_.at(idx.column());
+        if (idx.column() == 1) {
+            int i = 1;
+        }
+        const DbModelCol & column = mapping_.at(idx.column());
+        const DbColumn & colorig = column.original_;
         QSqlTableModel * main_model = tables_.first().model;
         if (main_model == NULL)
             break;
         QVariant main_value = main_model->data (
-                    main_model->index(idx.row(), column.table_index_));
+                    main_model->index (idx.row(), column.table_index_));
 
         // for simple cases this is it
-        if ((role == Qt::EditRole) || !column.isForeign()) {
+        if (role == Qt::EditRole) {
             return main_value;
+        }
+
+        if (!column.isForeign()) {
+            return formattedData (colorig, main_value);
         }
 
         // we have a value that is an index in another table
@@ -493,6 +640,7 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
         for (int i = 0; i < i_max; ++i) {
             if (model->data(model->index(i, column.t_primary_), Qt::EditRole) == main_value) {
                 main_value = model->data(model->index(i, column.t_display_), Qt::DisplayRole);
+                main_value = formattedData (column.table_->meta->columnCtor (i), main_value);
                 break;
             }
         }
@@ -530,7 +678,7 @@ QVariant DbModelPrivate::headerData (
             col.label_ = col.table_->meta->columnLabel (col.t_display_);
         }
 */
-        const DbModelCol & col = mapping_[section];
+        const DbModelCol & col = mapping_.at(section);
         return col.label_;
     }
     return QAbstractTableModel::headerData (section, orientation, role);
@@ -831,13 +979,27 @@ void DbModelPrivate::addForeignKeyColumn (
             // No further intervention is required.
         }
 
-        loc_col.label_ = loc_col.table_->meta->columnLabel (loc_col.t_display_);
+        if (col.foreign_ref_.count() == 1) {
+            loc_col.label_ = tables_.at (0).meta->columnLabel (loc_col.table_index_);
+        } else {
+            loc_col.label_ = loc_col.table_->meta->columnLabel (loc_col.t_display_);
+        }
         mapping_.append (loc_col);
         //setHeaderData(col_idx, Qt::Vertical, QString("Y %1").arg (col_idx));
         ++col_idx;
     }
 
     DBMODEL_TRACE_EXIT;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+QSqlRecord DbModelPrivate::record (int row) const
+{
+    if (!isValid()) {
+        return QSqlRecord();
+    }
+    return mainModel()->record (row);
 }
 /* ========================================================================= */
 

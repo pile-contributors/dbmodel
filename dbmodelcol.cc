@@ -25,6 +25,12 @@
 #include "dbmodelcol.h"
 #include "dbmodelprivate.h"
 
+#include "assert.h"
+
+#include <QSqlTableModel>
+#include <QVariant>
+#include <QComboBox>
+
 /*  INCLUDES    ============================================================ */
 //
 //
@@ -73,6 +79,8 @@ DbModelCol::DbModelCol() :
     label_(),
     original_()
 {
+    DBMODEL_TRACE_ENTRY;
+    DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
 
@@ -88,6 +96,9 @@ DbModelCol::DbModelCol(
     label_(),
     original_(source)
 {
+    DBMODEL_TRACE_ENTRY;
+    assert(table_->isValid());
+    DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
 
@@ -101,6 +112,11 @@ DbModelCol::DbModelCol (const DbModelCol & other) :
     label_(other.label_),
     original_(other.original_)
 {
+    DBMODEL_TRACE_ENTRY;
+    if (table_ != NULL) {
+        assert(table_->isValid());
+    }
+    DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
 
@@ -114,7 +130,53 @@ DbModelCol & DbModelCol::operator= (const DbModelCol & other)
     t_display_ = other.t_display_;
     label_ = other.label_;
     original_ = other.original_;
+
+    if (table_ != NULL) {
+        assert(table_->isValid());
+    }
     return *this;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbModelCol::setCombo (QComboBox *control, const QVariant & key) const
+{
+    DBMODEL_TRACE_ENTRY;
+    bool b_ret = false;
+    for (;;) {
+
+        if (!isForeign()) {
+            DBMODEL_DEBUGM("The column is not a foreign one");
+            break;
+        }
+
+        if (!table_->isValid()) {
+            DBMODEL_DEBUGM("Referenced table is not valid");
+            break;
+        }
+        QSqlTableModel * model = table_->model;
+        control->setModel (model);
+        control->setModelColumn (t_display_);
+
+        int i_max = model->rowCount ();
+        bool b_found = false;
+        for (int i = 0; i < i_max; ++i) {
+            if (model->data(model->index(i, t_primary_), Qt::EditRole) == key) {
+                control->setCurrentIndex (i);
+                b_found = true;
+                break;
+            }
+        }
+        if (!b_found) {
+            DBMODEL_DEBUGM("The key was not found in related model");
+            break;
+        }
+
+        b_ret = true;
+        break;
+    }
+    DBMODEL_TRACE_EXIT;
+    return b_ret;
 }
 /* ========================================================================= */
 
