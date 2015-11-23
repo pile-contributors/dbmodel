@@ -263,6 +263,10 @@ public:
     record (
             int row) const;
 
+    //! Read the labels again (possibly in a different language).
+    void
+    reloadHeaders ();
+
 
     /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
     /** @name QSqlTableModel

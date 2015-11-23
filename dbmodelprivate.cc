@@ -1003,6 +1003,31 @@ QSqlRecord DbModelPrivate::record (int row) const
 }
 /* ========================================================================= */
 
+/* ------------------------------------------------------------------------- */
+void DbModelPrivate::reloadHeaders ()
+{
+    beginResetModel();
+    int i_max = mapping_.count();
+    for (int i = 0; i < i_max; ++i) {
+        DbModelCol & coldata = mapping_[i];
+        const DbColumn & col = coldata.original_;
+
+        if (coldata.isForeign()) {
+            if (col.foreign_ref_.count() == 1) {
+                coldata.label_ = tables_.at (0).meta->columnLabel (
+                            coldata.table_index_);
+            } else {
+                coldata.label_ = coldata.table_->meta->columnLabel (
+                            coldata.t_display_);
+            }
+        } else {
+            coldata.label_ = tables_.at (0).meta->columnLabel (
+                        coldata.table_index_);
+        }
+    }
+    endResetModel();
+}
+/* ========================================================================= */
 
 /*  CLASS    =============================================================== */
 //

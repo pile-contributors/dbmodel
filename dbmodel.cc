@@ -322,6 +322,13 @@ QSqlRecord DbModel::record(int row) const
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+void DbModel::reloadHeaders ()
+{
+    return impl->reloadHeaders ();
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
 /**
  * The method checks the input against current valid range and stores the
  * coordinates of the cell to highlite with a different color and icon.
