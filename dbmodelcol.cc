@@ -421,9 +421,12 @@ QVariant DbModelCol::comboResult (
 #if 1
         // see if the user is able to modify the source table
         if (original_.foreign_behaviour_ == DbColumn::FB_CHOOSE_ADD) {
+            QString user_text = control->currentText();
+            QString prev_text = control->itemText (crt_idx);
+
             // did the user actually added a new thingy?
             QVariant udata = control->itemData (crt_idx);
-            if (!udata.isValid()) {
+            if (!udata.isValid() || (user_text != prev_text)) {
                 // this is a new one
                 result = DbModelCol::comboInsert (
                         top_model, control->currentText());
