@@ -377,7 +377,6 @@ private:
     void
     addForeignKeyColumn (
         const DbColumn & col,
-        int index,
         int & col_idx);
 
     /*  FUNCTIONS    ======================================================= */

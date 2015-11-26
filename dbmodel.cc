@@ -177,7 +177,7 @@ bool DbModel::selectMe ()
  */
 int DbModel::rowCount () const
 {
-    DBMODEL_DEBUGM("%d rows\n", impl->rowCount());
+    // DBMODEL_DEBUGM("%d rows\n", impl->rowCount());
     return impl->rowCount();
 }
 /* ========================================================================= */
@@ -343,18 +343,18 @@ bool DbModel::setCurrentMarker (int column, int row)
     for (;;) {
 
         if (!isValid()) {
-            DBMODEL_DEBUGM("The model is in invalid state");
+            DBMODEL_DEBUGM("The model is in invalid state\n");
             break;
         }
 
         if ((column < 0) || (column >= columnCount())) {
-            DBMODEL_DEBUGM("column %d outside valid range [0, %d)",
+            DBMODEL_DEBUGM("column %d outside valid range [0, %d)\n",
                          column, columnCount());
             break;
         }
 
         if ((row < 0) || (row >= columnCount())) {
-            DBMODEL_DEBUGM("row %d outside valid range [0, %d)",
+            DBMODEL_DEBUGM("row %d outside valid range [0, %d)\n",
                          row, rowCount());
             break;
         }

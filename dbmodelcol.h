@@ -25,6 +25,7 @@
 
 #include <dbmodel/dbmodel-config.h>
 #include <dbstruct/dbstruct.h>
+#include <dbstruct/dbcolumn.h>
 #include <dbstruct/dbtaew.h>
 
 /*  INCLUDES    ============================================================ */
@@ -37,8 +38,10 @@
 QT_BEGIN_NAMESPACE
 class QComboBox;
 class QVariant;
+class QModelIndex;
 QT_END_NAMESPACE
 
+class DbModel;
 class DbModelTbl;
 
 /*  DEFINITIONS    ========================================================= */
@@ -68,7 +71,6 @@ class DBMODEL_EXPORT DbModelCol
 public:
 
     int user_index_; /**< index of this column in `mapping_` */
-    int table_index_; /**< index of this column in main table */
     const DbModelTbl * table_; /**< the table that holds information that this column shows */
     int t_primary_; /**< column index in referenced table (-1 indicates this is a local column) of the key */
     int t_display_; /**< column index in referenced table (-1 indicates this is a local column) of the display */
@@ -91,7 +93,6 @@ public:
     DbModelCol (
             const DbColumn & source,
             int user_index,
-            int table_index,
             const DbModelTbl & table);
 
     //! Copy constructor.
@@ -113,7 +114,36 @@ public:
     bool
     setCombo (
         QComboBox * control,
-        const QVariant & key) const;
+        const QVariant & key,
+        bool b_delegate_enh = true) const;
+
+    //! Retreives the value and saves it back n the model.
+    bool
+    getComboValue (
+        const QModelIndex & index,
+        DbModel * top_model,
+        QComboBox * control) const;
+
+    //! Get the result from a foreign key combo.
+    QVariant
+    comboResult (
+            DbModel *top_model,
+            QComboBox *control) const;
+
+    QVariant
+    comboInsert (
+            DbModel *top_model,
+            const QString &value) const;
+
+    int
+    mainTableRealIndex () const {
+        return original_.real_col_id_;
+    }
+
+    int
+    mainTableVirtualIndex () const {
+        return original_.col_id_;
+    }
 
 
     /*  FUNCTIONS    ======================================================= */
