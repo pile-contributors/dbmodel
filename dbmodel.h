@@ -111,7 +111,7 @@ public:
     DbStruct *
     takeDatabase ();
 
-    //! Get the model data regarding a column.
+    //! Get the model data regarding a column; index is a virtual index.
     const DbModelCol &
     columnData (
         int index) const;

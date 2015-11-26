@@ -610,20 +610,36 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
             break;
 
         // data for this column in main table
+#ifdef DBMODEL_DEBUG
         if (idx.column() == 1) {
             int i = 1;
         }
+#endif
         const DbModelCol & column = mapping_.at(idx.column());
         const DbColumn & colorig = column.original_;
+        QVariant main_value;
         QSqlTableModel * main_model = tables_.first().model;
         if (main_model == NULL)
             break;
 
-        // if this is a virtual column we need the index of the
+        // if this is a virtual column we need the index of the original column
+        if (colorig.isVirtual()) {
+            assert(colorig.virtrefcol_ >= 0);
+            assert(colorig.virtrefcol_ < mapping_.count());
 
-
-        QVariant main_value = main_model->data (
-                    main_model->index (idx.row(), column.mainTableRealIndex ()));
+            // get the key in foreign table
+            const DbModelCol & ref_col = mapping_.at(colorig.virtrefcol_);
+            main_value = main_model->data (
+                        main_model->index (idx.row(),
+                                           ref_col.mainTableRealIndex ()));
+        } else {
+            // Get the value stored on this column (may be actual
+            // value or the key in a foreign table.
+            main_value = main_model->data (
+                        main_model->index (
+                            idx.row(),
+                            column.mainTableRealIndex ()));
+        }
 
         // for simple cases this is it
         if (role == Qt::EditRole) {
@@ -638,17 +654,33 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
         QSqlTableModel * model = column.table_->model;
         if (model == NULL)
             break;
+        // DbTaew * meta = column.table_->meta;
 
         //! @todo column.t_display_;
         int i_max = model->rowCount();
         for (int i = 0; i < i_max; ++i) {
-            if (model->data(model->index(i, column.t_primary_), Qt::EditRole) == main_value) {
-                main_value = model->data(model->index(i, column.t_display_), Qt::DisplayRole);
-                main_value = formattedData (column.table_->meta->columnCtor (i), main_value);
+            // loop-get the key
+            QVariant iter_key = model->data (
+                        model->index(i, column.t_primary_),
+                        Qt::EditRole);
+            // did we found it? (ineficient)
+            if (iter_key == main_value) {
+                main_value = model->data (
+                            model->index(i, column.t_display_),
+                            Qt::DisplayRole);
+#               if 1
+                // format the data according to the rules for our column
+                main_value = formattedData (
+                            colorig, main_value);
+#               else
+                // format the data according to the rules for source column
+                main_value = formattedData (
+                            column.table_->meta->columnCtor (column.t_display_),
+                            main_value);
+#               endif
                 break;
             }
         }
-
 
         // return model->data (model->index(row, idx_mcol));
         // DBMODEL_DEBUGM("DbModelPrivate::data = %s\n", TMP_A(main_value.toString()));

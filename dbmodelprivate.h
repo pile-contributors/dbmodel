@@ -211,7 +211,7 @@ public:
         return result;
     }
 
-    //! Get the model data regarding a column.
+    //! Get the model data regarding a column; index is a real index.
     const DbModelCol &
     columnData (
         int index) const {
