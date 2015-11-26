@@ -22,6 +22,7 @@
 /*  INCLUDES    ------------------------------------------------------------ */
 
 #include "dbmodelprivate.h"
+#include "dbmodelmanager.h"
 #include "dbmodel.h"
 
 #include <dbstruct/dbtable.h>
@@ -610,6 +611,15 @@ bool DbModelPrivate::removeRows (int row, int count, const QModelIndex &)
 QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
 {
     for (;;) {
+
+        if ((idx.row() == row_highlite_) && (idx.column() == col_highlite_)) {
+            if (role == Qt::DecorationRole) {
+                return QVariant (DbModelManager::getIcon ());
+            } else if (role == Qt::BackgroundColorRole) {
+                return QVariant (DbModelManager::getColor ());
+            }
+        }
+
         if (role != Qt::DisplayRole)
             if (role != Qt::EditRole)
                 break;
