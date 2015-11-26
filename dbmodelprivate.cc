@@ -194,7 +194,7 @@ bool DbModelPrivate::selectMe ()
             }
 #           ifdef DBMODEL_DEBUG
             else {
-                DBMODEL_DEBUGM("model->select query: %s\n",
+                DBMODEL_DEBUGM("        model->select query: %s\n",
                              TMP_A(model->query().lastQuery()));
             }
 #           endif
