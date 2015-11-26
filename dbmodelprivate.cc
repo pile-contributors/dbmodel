@@ -73,7 +73,9 @@ DbModelPrivate::DbModelPrivate(DbStruct * db, DbTaew * meta, QObject * parent) :
     QAbstractTableModel(parent),
     db_(db),
     mapping_(),
-    tables_()
+    tables_(),
+    col_highlite_(-1),
+    row_highlite_(-1)
 {
     DBMODEL_TRACE_ENTRY;
     loadMeta (meta);
@@ -94,7 +96,9 @@ DbModelPrivate::DbModelPrivate(DbStruct * db, int component, QObject * parent) :
     QAbstractTableModel(parent),
     db_(db),
     mapping_(),
-    tables_()
+    tables_(),
+    col_highlite_(-1),
+    row_highlite_(-1)
 {
     DBMODEL_TRACE_ENTRY;
     DbTaew * meta = NULL;
@@ -137,6 +141,8 @@ void DbModelPrivate::setMeta (DbTaew * meta)
     if ((db_ != NULL) && (meta != metaTaew ())) {
         terminateMeta ();
         loadMeta (meta);
+        col_highlite_ = -1;
+        row_highlite_ = -1;
     }
     DBMODEL_TRACE_EXIT;
 }
@@ -165,6 +171,8 @@ void DbModelPrivate::setMeta (DbStruct * database, DbTaew * meta)
     DBMODEL_TRACE_ENTRY;
     setDatabase (database);
     setMeta (meta);
+    col_highlite_ = -1;
+    row_highlite_ = -1;
     DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -1052,6 +1060,48 @@ void DbModelPrivate::reloadHeaders ()
                         coldata.mainTableVirtualIndex());
     }
     endResetModel();
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+/**
+ * The method checks the input against current valid range and stores the
+ * coordinates of the cell to highlite with a different color and icon.
+ *
+ * @param column the column of the cell to highlite
+ * @param row the row of the cell to highlite
+ * @return true if the checks passed
+ */
+bool DbModelPrivate::setCurrentMarker (int column, int row)
+{
+    bool b_ret = false;
+    for (;;) {
+
+        if (!isValid()) {
+            DBMODEL_DEBUGM("The model is in invalid state\n");
+            break;
+        }
+
+        if ((column < 0) || (column >= columnCount())) {
+            DBMODEL_DEBUGM("column %d outside valid range [0, %d)\n",
+                         column, columnCount());
+            break;
+        }
+
+        if ((row < 0) || (row >= columnCount())) {
+            DBMODEL_DEBUGM("row %d outside valid range [0, %d)\n",
+                         row, rowCount());
+            break;
+        }
+
+        // save the values
+        col_highlite_ = row;
+        row_highlite_ = column;
+
+        b_ret = true;
+        break;
+    }
+    return b_ret;
 }
 /* ========================================================================= */
 

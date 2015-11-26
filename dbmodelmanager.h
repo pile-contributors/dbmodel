@@ -1,11 +1,11 @@
 /* ========================================================================= */
 /* ------------------------------------------------------------------------- */
 /*!
-  file         dbmodeltbl.h
-  date         November 2015
-  author       Nicu Tofan
+  file         dbmodelmanager.h
+  date         Oct 2015
+  author
 
-  brief        Contains the definition for DbModelTbl class.
+  brief        Contains the definition for DbModelManager class.
 
 *//*
 
@@ -15,8 +15,8 @@
 */
 /* ------------------------------------------------------------------------- */
 /* ========================================================================= */
-#ifndef DBMODELTBL_H
-#define DBMODELTBL_H
+#ifndef DBMODELMANAGER_H
+#define DBMODELMANAGER_H
 //
 //
 //
@@ -24,7 +24,9 @@
 /*  INCLUDES    ------------------------------------------------------------ */
 
 #include <dbmodel/dbmodel-config.h>
-#include <dbstruct/dbtaew.h>
+
+#include <QIcon>
+#include <QColor>
 
 /*  INCLUDES    ============================================================ */
 //
@@ -40,14 +42,14 @@
 //
 /*  CLASS    --------------------------------------------------------------- */
 
-//! Table data is stored only once with multiple references from columns.
-class DBMODEL_EXPORT DbModelTbl
-{
+//! .
+class DBMODEL_EXPORT DbModelManager {
     //
     //
     //
     //
     /*  DEFINITIONS    ----------------------------------------------------- */
+
 
     /*  DEFINITIONS    ===================================================== */
     //
@@ -56,10 +58,11 @@ class DBMODEL_EXPORT DbModelTbl
     //
     /*  DATA    ------------------------------------------------------------ */
 
-public:
+private:
 
-    DbTaew * meta; /**< metadata about main table or view */
-    QSqlTableModel * model; /**< the undelying model */
+    QIcon crt_icon_marker_; /**< Icon used to indicate current items */
+    QColor crt_color_marker_; /**< Background used to indicate current items */
+    static DbModelManager * uniq_; /**< The one and only instance */
 
     /*  DATA    ============================================================ */
     //
@@ -70,29 +73,55 @@ public:
 
 public:
 
-    //! Constructor.
-    DbModelTbl() {}
+    //! Initialize the manager
+    static bool
+    init ();
+
+    //! Terminate the manager.
+    static void
+    end ();
+
+    //! Retreive icon marker.
+    static const QIcon &
+    getIcon () {
+        return uniq_->crt_icon_marker_;
+    }
+
+    //! Set icon marker.
+    static void
+    setIcon (const QIcon & value) {
+        uniq_->crt_icon_marker_ = value;
+    }
+
+    //! Retreive color marker.
+    static const QColor &
+    getColor () {
+        return uniq_->crt_color_marker_;
+    }
+
+    //! Set color marker.
+    static void
+    setColor (const QColor & value) {
+        uniq_->crt_color_marker_ = value;
+    }
+
+
+protected:
 
     //! Constructor.
-    DbModelTbl (
-            DbTaew * meta_part,
-            QSqlTableModel * model_part);
+    DbModelManager();
 
     //! destructor
-    ~DbModelTbl() {}
+    virtual ~DbModelManager();
 
-    //! Tell if this instance is valid (found in database).
-    bool
-    isValid () const {
-        return model != NULL;
-    }
+private:
 
     /*  FUNCTIONS    ======================================================= */
     //
     //
     //
     //
-}; /* class DbModelTbl */
+}; /* class DbModelManager */
 
 /*  CLASS    =============================================================== */
 //
@@ -101,7 +130,8 @@ public:
 //
 
 
-#endif // DBMODELTBL_H
+
+#endif // DBMODELMANAGER_H
 /* ------------------------------------------------------------------------- */
 /* ========================================================================= */
 

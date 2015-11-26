@@ -27,8 +27,6 @@ class DBMODEL_EXPORT DbModel : public QSortFilterProxyModel  {
     Q_OBJECT
 
     DbModelPrivate * impl;
-    int row_highlite_; /**< the row for the cell to highlite */
-    int col_highlite_; /**< the column for the cell to highlite */
 
 public:
 
@@ -178,22 +176,16 @@ public:
         int row);
 
     //! Retreive highlite row.
-    inline int
-    getMarkerRow () const {
-        return row_highlite_;
-    }
+    int
+    getMarkerRow () const;
 
     //! Retreive highlite column.
-    inline int
-    getMarkerCol () const {
-        return col_highlite_;
-    }
+    int
+    getMarkerCol () const;
 
     //! Tell if we have a highlite cell set.
-    inline bool
-    hasMarkerCell () const {
-        return (col_highlite_ > -1) && (row_highlite_ > -1);
-    }
+    bool
+    hasMarkerCell () const;
 
     ///@}
     /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */

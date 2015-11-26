@@ -1,11 +1,11 @@
 /* ========================================================================= */
 /* ------------------------------------------------------------------------- */
 /*!
-  file         dbmodeltbl.cc
-  date         November 2015
-  author       Nicu Tofan
+  file         dbmodelmanager.cc
+  date         Oct 2015
+  author
 
-  brief        Contains the implementation for DbModelTbl class.
+  brief        Contains the implementation for DbModelManager class.
 
 *//*
 
@@ -21,7 +21,10 @@
 //
 /*  INCLUDES    ------------------------------------------------------------ */
 
-#include "dbmodeltbl.h"
+#include "dbmodelmanager.h"
+
+#include <QApplication>
+#include <QStyle>
 
 /*  INCLUDES    ============================================================ */
 //
@@ -30,6 +33,8 @@
 //
 /*  DEFINITIONS    --------------------------------------------------------- */
 
+DbModelManager * DbModelManager::uniq_ = NULL;
+
 /*  DEFINITIONS    ========================================================= */
 //
 //
@@ -37,22 +42,52 @@
 //
 /*  CLASS    --------------------------------------------------------------- */
 
-/**
- * @class DbModelTbl
- *
- * Each table that is actually used by this model gets an entry of this
- * kind in `tables_`, with the first one always being the main table.
- *
- * The instance may be invalid if the referenced table is not found
- * (by name) in the database at initialization time (`table()`).
- */
+/* ------------------------------------------------------------------------- */
+bool DbModelManager::init()
+{
+    bool b_ret = false;
+    for (;;) {
+        if (uniq_ != NULL) {
+            b_ret = true;
+            break;
+        }
+        uniq_ = new DbModelManager ();
+
+
+        b_ret = true;
+        break;
+    }
+    return b_ret;
+}
+/* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
-DbModelTbl::DbModelTbl (
-        DbTaew * meta_part, QSqlTableModel * model_part) :
-    meta(meta_part),
-    model(model_part)
+void DbModelManager::end ()
 {
+    for (;;) {
+        if (uniq_ == NULL) {
+            break;
+        }
+
+
+        delete uniq_;
+        break;
+    }
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+DbModelManager::DbModelManager() :
+    crt_icon_marker_(QApplication::style()->standardIcon(QStyle::SP_MediaPlay)),
+    crt_color_marker_(QColor (255, 255, 153))
+{
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+DbModelManager::~DbModelManager()
+{
+
 }
 /* ========================================================================= */
 

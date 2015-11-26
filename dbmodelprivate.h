@@ -101,6 +101,8 @@ private:
     QList<DbModelCol> mapping_; /**< one entry for each column mapping between
                              user-indices and internal models */
     QList<DbModelTbl> tables_; /**< the list of tables referenced by this model */
+    int row_highlite_; /**< the row for the cell to highlite */
+    int col_highlite_; /**< the column for the cell to highlite */
 
     /*  DATA    ============================================================ */
     //
@@ -158,6 +160,8 @@ public:
         DbTaew * result = tables_.first().meta;
         tables_.first().meta = NULL;
         terminateMeta ();
+        col_highlite_ = -1;
+        row_highlite_ = -1;
         return result;
     }
 
@@ -208,6 +212,8 @@ public:
         DbStruct * result = db_;
         db_ = NULL;
         setMeta (NULL);
+        col_highlite_ = -1;
+        row_highlite_ = -1;
         return result;
     }
 
@@ -353,6 +359,45 @@ protected:
     ///@}
     /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
 
+
+    /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
+    /** @name Marker
+    * A cell may be highlited in a different color and with
+    * a special icon; the model only stores the coordinates
+    * of that cell.
+    */
+    ///@{
+
+public:
+
+    //! Set the indicated .
+    bool
+    setCurrentMarker (
+        int column,
+        int row);
+
+    //! Retreive highlite row.
+    inline int
+    getMarkerRow () const {
+        return row_highlite_;
+    }
+
+    //! Retreive highlite column.
+    inline int
+    getMarkerCol () const {
+        return col_highlite_;
+    }
+
+    //! Tell if we have a highlite cell set.
+    inline bool
+    hasMarkerCell () const {
+        return (col_highlite_ > -1) && (row_highlite_ > -1);
+    }
+
+    ///@}
+    /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
+
+
 private:
 
     //! Destroys meta object.
@@ -378,6 +423,8 @@ private:
     addForeignKeyColumn (
         const DbColumn & col,
         int & col_idx);
+
+
 
     /*  FUNCTIONS    ======================================================= */
     //

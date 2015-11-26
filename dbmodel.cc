@@ -37,9 +37,7 @@
  */
 DbModel::DbModel(DbStruct * db, DbTaew * meta, QObject * parent) :
     QSortFilterProxyModel(parent),
-    impl(new DbModelPrivate (db, meta, this)),
-    col_highlite_(-1),
-    row_highlite_(-1)
+    impl(new DbModelPrivate (db, meta, this))
 {
     DBMODEL_TRACE_ENTRY;
     setSourceModel(impl);
@@ -59,9 +57,7 @@ DbModel::DbModel(DbStruct * db, DbTaew * meta, QObject * parent) :
  */
 DbModel::DbModel(DbStruct * db, int component, QObject * parent) :
     QSortFilterProxyModel(parent),
-    impl(new DbModelPrivate (db, component, this)),
-    col_highlite_(-1),
-    row_highlite_(-1)
+    impl(new DbModelPrivate (db, component, this))
 {
     DBMODEL_TRACE_ENTRY;
     setSourceModel(impl);
@@ -104,8 +100,6 @@ void DbModel::setMeta (DbTaew * meta)
 {
     DBMODEL_TRACE_ENTRY;
     impl->setMeta (meta);
-    col_highlite_ = -1;
-    row_highlite_ = -1;
     DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -132,8 +126,6 @@ void DbModel::setMeta (DbStruct * database, DbTaew * meta)
 {
     DBMODEL_TRACE_ENTRY;
     impl->setMeta (database, meta);
-    col_highlite_ = -1;
-    row_highlite_ = -1;
     DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -141,8 +133,6 @@ void DbModel::setMeta (DbStruct * database, DbTaew * meta)
 /* ------------------------------------------------------------------------- */
 DbTaew * DbModel::takeMeta ()
 {
-    col_highlite_ = -1;
-    row_highlite_ = -1;
     return impl->takeMeta();
 }
 /* ========================================================================= */
@@ -219,8 +209,6 @@ void DbModel::setDatabase (DbStruct * value)
 /* ------------------------------------------------------------------------- */
 DbStruct * DbModel::takeDatabase ()
 {
-    col_highlite_ = -1;
-    row_highlite_ = -1;
     return impl->takeDatabase();
 }
 /* ========================================================================= */
@@ -339,34 +327,7 @@ void DbModel::reloadHeaders ()
  */
 bool DbModel::setCurrentMarker (int column, int row)
 {
-    bool b_ret = false;
-    for (;;) {
-
-        if (!isValid()) {
-            DBMODEL_DEBUGM("The model is in invalid state\n");
-            break;
-        }
-
-        if ((column < 0) || (column >= columnCount())) {
-            DBMODEL_DEBUGM("column %d outside valid range [0, %d)\n",
-                         column, columnCount());
-            break;
-        }
-
-        if ((row < 0) || (row >= columnCount())) {
-            DBMODEL_DEBUGM("row %d outside valid range [0, %d)\n",
-                         row, rowCount());
-            break;
-        }
-
-        // save the values
-        col_highlite_ = row;
-        row_highlite_ = column;
-
-        b_ret = true;
-        break;
-    }
-    return b_ret;
+    return impl->setCurrentMarker (column, row);
 }
 /* ========================================================================= */
 
@@ -401,3 +362,23 @@ bool DbModel::lessThan (const QModelIndex &left, const QModelIndex &right) const
 }
 /* ========================================================================= */
 
+/* ------------------------------------------------------------------------- */
+int DbModel::getMarkerRow () const
+{
+    return impl->getMarkerRow ();
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+int DbModel::getMarkerCol () const
+{
+    return impl->getMarkerCol ();
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbModel::hasMarkerCell () const
+{
+    return impl->hasMarkerCell ();
+}
+/* ========================================================================= */

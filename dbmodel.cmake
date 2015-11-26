@@ -18,10 +18,12 @@ macro    (dbmodelInit
 
     # compose the list of headers and sources
     set(DBMODEL_HEADERS
+        "dbmodelmanager.h"
         "dbmodel.h"
         "dbmodeltbl.h"
         "dbmodelcol.h")
     set(DBMODEL_SOURCES
+        "dbmodelmanager.cc"
         "dbmodel.cc"
         "dbmodeltbl.cc"
         "dbmodelprivate.cc"
