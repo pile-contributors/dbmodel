@@ -37,7 +37,8 @@
  */
 DbModel::DbModel(DbStruct * db, DbTaew * meta, QObject * parent) :
     QSortFilterProxyModel(parent),
-    impl(new DbModelPrivate (db, meta, this))
+    impl(new DbModelPrivate (db, meta, this)),
+    filter_()
 {
     DBMODEL_TRACE_ENTRY;
     setSourceModel(impl);
@@ -57,7 +58,8 @@ DbModel::DbModel(DbStruct * db, DbTaew * meta, QObject * parent) :
  */
 DbModel::DbModel(DbStruct * db, int component, QObject * parent) :
     QSortFilterProxyModel(parent),
-    impl(new DbModelPrivate (db, component, this))
+    impl(new DbModelPrivate (db, component, this)),
+    filter_()
 {
     DBMODEL_TRACE_ENTRY;
     setSourceModel(impl);
@@ -238,6 +240,9 @@ const DbModelTbl & DbModel::tableData (int table_index) const
  */
 bool DbModel::setFilter (const QString & filter, int table_index)
 {
+    if (table_index == 0) {
+        filter_ = filter;
+    }
     return impl->setFilter (filter, table_index);
 }
 /* ========================================================================= */
@@ -253,7 +258,14 @@ bool DbModel::setFilter (const QString & filter, int table_index)
  */
 bool DbModel::setFilter (const QString & filter, const QString & table)
 {
-    return impl->setFilter (filter, table);
+    int table_index = impl->findTable (table);
+    if (table_index == -1) {
+        DBMODEL_DEBUGM("This model does not contain a table called %s\n",
+                       TMP_A(table));
+        return false;
+    }
+
+    return setFilter (filter, table_index);
 }
 /* ========================================================================= */
 
@@ -295,7 +307,7 @@ bool DbModel::setOrder (int column, Qt::SortOrder order, const QString & table)
  * @param table name of the table to search for
  * @return -1 if it was not found, 0 based index otherwise
  */
-int DbModel::findTable (const QString &table)
+int DbModel::findTable (const QString &table) const
 {
     return impl->findTable (table);
 }

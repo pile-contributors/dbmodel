@@ -26,7 +26,8 @@ class DbModelPrivate;
 class DBMODEL_EXPORT DbModel : public QSortFilterProxyModel  {
     Q_OBJECT
 
-    DbModelPrivate * impl;
+    DbModelPrivate * impl; /**< the private implementation */
+    QString filter_; /**< current installed filter */
 
 public:
 
@@ -131,6 +132,12 @@ public:
             const QString & filter,
             const QString & table);
 
+    //! Get the filter installed on main model.
+    const QString &
+    filter () const {
+        return filter_;
+    }
+
     //! Set a filter on one of the internal models identified by its index.
     bool
     setOrder (
@@ -149,7 +156,7 @@ public:
     //! Find the index of a model identified by its name.
     int
     findTable (
-            const QString & table);
+            const QString & table) const;
 
     //! Get a record for a row
     QSqlRecord

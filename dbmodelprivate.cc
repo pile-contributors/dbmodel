@@ -412,7 +412,7 @@ bool DbModelPrivate::setOrder (int column, Qt::SortOrder order, const QString & 
  * @param table name of the table to search for
  * @return -1 if it was not found, 0 based index otherwise
  */
-int DbModelPrivate::findTable (const QString &table)
+int DbModelPrivate::findTable (const QString &table) const
 {
     int i_max = tables_.count();
     for (int i = 0; i < i_max; ++i) {

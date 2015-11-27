@@ -268,8 +268,6 @@ bool DbModelCol::setCombo (
         QSqlTableModel * model = table_->model;
         bool b_found = false;
 
-#if 1
-
         if (original_.foreign_behaviour_ == DbColumn::FB_CHOOSE_ADD) {
             // foreign keys allowed to edit
             control->setEditable (true);
@@ -292,13 +290,12 @@ bool DbModelCol::setCombo (
                     b_found = true;
                 }
             }
-            if (!b_found) {
-                DBMODEL_DEBUGM("The key was not found in related model\n");
+//            if (!b_found) {
 //                QString s = model->data(model->index(i, t_display_),
 //                                        Qt::DisplayRole)
 //                            .toString();
 //                control->setCurrentText (s);
-            }
+//            }
 
         } else {
             // foreign keys not allowed to edit
@@ -311,53 +308,19 @@ bool DbModelCol::setCombo (
             for (int i = 0; i < i_max; ++i) {
                 if (model->data(model->index(i, t_primary_), Qt::EditRole) == key) {
                     control->setCurrentIndex (i);
-
                     b_found = true;
                     break;
                 }
             }
-            if (!b_found) {
-                DBMODEL_DEBUGM("The key was not found in related model\n");
-                break;
-            }
-        }
 
-#else
-        ComboLine * led = NULL;
-        ComboFix * cfx = new ComboFix(model, control);
-        control->setModel (cfx);
-        control->setModelColumn (t_display_);
-        if (original_.foreign_behaviour_ == DbColumn::FB_CHOOSE) {
-            control->setEditable (false);
-        } else { // DbColumn::FB_CHOOSE_ADD
-            control->setEditable (true);
-            led = new ComboLine(control);
-            control->setLineEdit (led);
-        }
-        int i_max = model->rowCount ();
-        bool b_found = false;
-        for (int i = 0; i < i_max; ++i) {
-            if (model->data(model->index(i, t_primary_), Qt::EditRole) == key) {
-                control->setCurrentIndex (i);
-                if (led != NULL) {
-                    QString s = model->data(model->index(i, t_display_),
-                                            Qt::DisplayRole)
-                                .toString();
-                    led->forced_text_ = s;
-                    led->one_time_trigger_ = true;
-                    DBMODEL_DEBUGM("---===>>> forcing the text to be: %s\n", TMP_A(s));
-                }
-                b_found = true;
-                break;
-            }
         }
         if (!b_found) {
-            DBMODEL_DEBUGM("The key was not found in related model\n");
+            DBMODEL_DEBUGM("The key <%s> was not found in related "
+                           "<%s> model\n",
+                           TMP_A(key.toString()),
+                           TMP_A(table_->meta->tableName()));
             break;
         }
-
-#endif
-
 
         b_ret = true;
         break;

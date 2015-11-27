@@ -262,7 +262,7 @@ public:
     //! Find the index of a model identified by its name.
     int
     findTable (
-            const QString & table);
+            const QString & table) const;
 
     //! Get a record for a row
     QSqlRecord
