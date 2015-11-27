@@ -179,8 +179,8 @@ public:
     //! Set the indicated .
     bool
     setCurrentMarker (
-        int column,
-        int row);
+        int row,
+        int column);
 
     //! Retreive highlite row.
     int

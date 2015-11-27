@@ -337,7 +337,7 @@ void DbModel::reloadHeaders ()
  * @param row the row of the cell to highlite
  * @return true if the checks passed
  */
-bool DbModel::setCurrentMarker (int column, int row)
+bool DbModel::setCurrentMarker (int row, int column)
 {
     return impl->setCurrentMarker (column, row);
 }

@@ -370,11 +370,11 @@ protected:
 
 public:
 
-    //! Set the indicated .
+    //! Set the indicated cell.
     bool
     setCurrentMarker (
-        int column,
-        int row);
+        int row,
+        int column);
 
     //! Retreive highlite row.
     inline int
