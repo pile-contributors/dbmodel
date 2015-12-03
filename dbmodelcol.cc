@@ -36,6 +36,7 @@
 #include <QIdentityProxyModel>
 #include <QDebug>
 #include <QTimer>
+#include <QCheckBox>
 
 /*  INCLUDES    ============================================================ */
 //
@@ -244,6 +245,29 @@ DbModelCol & DbModelCol::operator= (const DbModelCol & other)
         assert(table_->isValid());
     }
     return *this;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbModelCol::setTristate (
+        QCheckBox *control, const QVariant & value, bool b_delegate_enh) const
+{
+    DBMODEL_TRACE_ENTRY;
+    bool b_ret = false;
+    for (;;) {
+        control->setTristate (true);
+        int val = value.toInt();
+        if ((val < Qt::Unchecked) || (val > Qt::Checked)) {
+            val = Qt::PartiallyChecked;
+        }
+        Qt::CheckState sts = (Qt::CheckState)val;
+        control->setCheckState (sts);
+
+        b_ret = true;
+        break;
+    }
+    DBMODEL_TRACE_EXIT;
+    return b_ret;
 }
 /* ========================================================================= */
 
@@ -479,7 +503,28 @@ bool DbModelCol::getComboValue (
 }
 /* ========================================================================= */
 
-    /*  CLASS    =============================================================== */
+/* ------------------------------------------------------------------------- */
+bool DbModelCol::getTristateValue (
+        const QModelIndex &index, DbModel * top_model,
+        QCheckBox *control) const
+{
+    DBMODEL_TRACE_ENTRY;
+    bool b_ret = false;
+    for (;;) {
+        top_model->setData (
+                    index, (int)control->checkState(),
+                    Qt::EditRole);
+        b_ret = true;
+        break;
+    }
+    DBMODEL_TRACE_EXIT;
+    return b_ret;
+}
+/* ========================================================================= */
+
+
+
+/*  CLASS    =============================================================== */
 //
 //
 //

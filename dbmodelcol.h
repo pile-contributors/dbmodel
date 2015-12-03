@@ -39,6 +39,7 @@ QT_BEGIN_NAMESPACE
 class QComboBox;
 class QVariant;
 class QModelIndex;
+class QCheckBox;
 QT_END_NAMESPACE
 
 class DbModel;
@@ -110,6 +111,8 @@ public:
         return t_primary_ != -1;
     }
 
+
+
     //! Set a combobox to work with this column's data.
     bool
     setCombo (
@@ -117,12 +120,13 @@ public:
         const QVariant & key,
         bool b_delegate_enh = true) const;
 
-    //! Retreives the value and saves it back n the model.
+    //! Retreives the value and saves it back in the model.
     bool
     getComboValue (
         const QModelIndex & index,
         DbModel * top_model,
         QComboBox * control) const;
+
 
     //! Get the result from a foreign key combo.
     QVariant
@@ -134,6 +138,23 @@ public:
     comboInsert (
             DbModel *top_model,
             const QString &value) const;
+
+
+
+    //! Retreives the value and saves it back in the model.
+    bool
+    getTristateValue (
+        const QModelIndex & index,
+        DbModel * top_model,
+        QCheckBox * control) const;
+
+    //! Prepare a checkbox to handle tristaed values.
+    bool
+    setTristate (
+        QCheckBox *control,
+        const QVariant & value,
+        bool b_delegate_enh) const;
+
 
     int
     mainTableRealIndex () const {

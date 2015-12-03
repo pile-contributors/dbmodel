@@ -469,6 +469,17 @@ Qt::ItemFlags DbModelPrivate::flags (const QModelIndex &idx) const
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+QString tristateToString (
+        int value, const QString & s_true,
+        const QString & s_false, const QString & s_undef = QString())
+{
+    if (value == Qt::Unchecked) return s_false;
+    else if (value == Qt::Checked) return s_true;
+    else return s_undef;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
 QVariant DbModelPrivate::formattedData (
         const DbColumn & colorig, const QVariant & original_value)
 {
@@ -483,13 +494,13 @@ QVariant DbModelPrivate::formattedData (
         // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
         result = result.toTime().toString(
             QCoreApplication::translate(
-                "UserTime", "h:m:s"));
+                "UserTime", "h:mm:ss"));
         break; }
     case DbColumn::DTY_DATETIME: {
         // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
         result = result.toDateTime().toString(
                 QCoreApplication::translate(
-                    "UserTime", "yyyy-MMM-dd h:m:s"));
+                    "UserTime", "yyyy-MMM-dd h:mm:ss"));
         break; }
     case DbColumn::DTY_SMALLINT:
     case DbColumn::DTY_BIGINT:
@@ -584,6 +595,82 @@ QVariant DbModelPrivate::formattedData (
         }
 
         break;}
+    case DbColumn::DTY_TRISTATE: {
+        switch (colorig.format_.bit_) {
+        case DbColumn::BF_YES_CAMEL: {
+            result = tristateToString (
+                        result.toInt(),
+                        QCoreApplication::translate("DbModel", "Yes"),
+                        QCoreApplication::translate("DbModel", "No"));
+            break; }
+        case DbColumn::BF_YES_LOWER: {
+            result = tristateToString (
+                        result.toInt(),
+                        QCoreApplication::translate("DbModel", "yes"),
+                        QCoreApplication::translate("DbModel", "no"));
+            break; }
+        case DbColumn::BF_YES_UPPER: {
+            result = tristateToString (
+                        result.toInt(),
+                        QCoreApplication::translate("DbModel", "YES"),
+                        QCoreApplication::translate("DbModel", "NO"));
+            break; }
+        case DbColumn::BF_ON_CAMEL: {
+            result = tristateToString (
+                        result.toInt(),
+                        QCoreApplication::translate("DbModel", "On"),
+                        QCoreApplication::translate("DbModel", "Off"));
+            break; }
+        case DbColumn::BF_ON_LOWER: {
+            result = tristateToString (
+                        result.toInt(),
+                        QCoreApplication::translate("DbModel", "on"),
+                        QCoreApplication::translate("DbModel", "off"));
+            break; }
+        case DbColumn::BF_ON_UPPER: {
+            result = tristateToString (
+                        result.toInt(),
+                        QCoreApplication::translate("DbModel", "ON"),
+                        QCoreApplication::translate("DbModel", "OFF"));
+            break; }
+        case DbColumn::BF_TRUE_CAMEL: {
+            result = tristateToString (
+                        result.toInt(),
+                        QCoreApplication::translate("DbModel", "True"),
+                        QCoreApplication::translate("DbModel", "False"));
+            break; }
+        case DbColumn::BF_TRUE_LOWER: {
+            result = tristateToString (
+                        result.toInt(),
+                        QCoreApplication::translate("DbModel", "true"),
+                        QCoreApplication::translate("DbModel", "false"));
+            break; }
+        case DbColumn::BF_TRUE_UPPER: {
+            result = tristateToString (
+                        result.toInt(),
+                        QCoreApplication::translate("DbModel", "TRUE"),
+                        QCoreApplication::translate("DbModel", "FALSE"));
+            break; }
+        case DbColumn::BF_Y_UPPER: {
+            result = tristateToString (
+                        result.toInt(),
+                        QCoreApplication::translate("DbModel", "Y"),
+                        QCoreApplication::translate("DbModel", "N"));
+            break; }
+        case DbColumn::BF_T_UPPER: {
+            result = tristateToString (
+                        result.toInt(),
+                        QCoreApplication::translate("DbModel", "T"),
+                        QCoreApplication::translate("DbModel", "F"));
+            break; }
+        default: // DbColumn::BF_STRING_ON
+            result = tristateToString (
+                        result.toInt(),
+                        colorig.original_format_,
+                        QString());
+        }
+
+        break;}
     default: break;
     };
 
@@ -620,9 +707,31 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
             }
         }
 
+        if (role == Qt::TextColorRole) {
+            // read-only items are shown in a lighter font
+            Qt::ItemFlags flgs = flags (idx);
+            bool beditable = flgs & Qt::ItemIsEditable;
+            if (beditable) {
+                break;
+            } else {
+                return QColor(Qt::darkGray);
+            }
+        } else if (role == Qt::BackgroundColorRole) {
+            QVariant editdata = data(idx, Qt::EditRole);
+            if (editdata.isNull()) {
+                // return QColor(224, 235, 235); // bluish
+                return QColor(255, 242, 229); // redish
+            } else {
+                break;
+            }
+        }
+
+
         if (role != Qt::DisplayRole)
             if (role != Qt::EditRole)
                 break;
+
+
 
         if (!validateIndex (idx))
             break;
