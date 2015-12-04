@@ -315,7 +315,7 @@ public:
     validateIndex (
             const QModelIndex &idx) const;
 
-    //! Tell if an index is valid for this model.
+    //! Set sorting order.
     void
     sort (
         int column,

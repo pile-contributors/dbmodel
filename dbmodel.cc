@@ -183,6 +183,7 @@ int DbModel::rowCount () const
  */
 int DbModel::columnCount () const
 {
+    if (impl == NULL) return 0;
     return impl->columnCount ();
 }
 /* ========================================================================= */
@@ -190,6 +191,7 @@ int DbModel::columnCount () const
 /* ------------------------------------------------------------------------- */
 DbStruct * DbModel::database () const
 {
+    if (impl == NULL) return NULL;
     return impl->database();
 }
 /* ========================================================================= */
@@ -204,13 +206,15 @@ DbStruct * DbModel::database () const
  */
 void DbModel::setDatabase (DbStruct * value)
 {
-    return impl->setDatabase (value);
+    if (impl != NULL)
+        impl->setDatabase (value);
 }
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
 DbStruct * DbModel::takeDatabase ()
 {
+    if (impl == NULL) return NULL;
     return impl->takeDatabase();
 }
 /* ========================================================================= */
