@@ -467,6 +467,7 @@ Qt::ItemFlags DbModelPrivate::flags (const QModelIndex &idx) const
     return result;
 }
 /* ========================================================================= */
+#if 0
 
 /* ------------------------------------------------------------------------- */
 QString tristateToString (
@@ -478,11 +479,13 @@ QString tristateToString (
     else return s_undef;
 }
 /* ========================================================================= */
-
+#endif
 /* ------------------------------------------------------------------------- */
 QVariant DbModelPrivate::formattedData (
         const DbColumn & colorig, const QVariant & original_value)
 {
+    return colorig.formattedData (original_value);
+#if 0
     QVariant result = original_value;
     switch (colorig.datatype_) {
     case DbColumn::DTY_DATE: {
@@ -675,6 +678,7 @@ QVariant DbModelPrivate::formattedData (
     };
 
     return result;
+#endif
 }
 /* ========================================================================= */
 
@@ -730,8 +734,6 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
         if (role != Qt::DisplayRole)
             if (role != Qt::EditRole)
                 break;
-
-
 
         if (!validateIndex (idx))
             break;

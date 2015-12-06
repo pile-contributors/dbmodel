@@ -135,10 +135,13 @@ public slots:
     //! We're informed that the text has changed.
     void ttChanged (const QString & s_value)
     {
+        /* no longer needed because I stopped
+         * QStyledItemDelegate::setEditorData (editor, index);
+         *
         if (one_time_trigger_) {
             one_time_trigger_ = false;
             setText (forced_text_);
-        }
+        }*/
     }
 
     //! Force a pop-up show.
@@ -262,7 +265,6 @@ bool DbModelCol::setTristate (
         }
         Qt::CheckState sts = (Qt::CheckState)val;
         control->setCheckState (sts);
-
         b_ret = true;
         break;
     }
@@ -313,6 +315,11 @@ bool DbModelCol::setCombo (
                     le->one_time_trigger_ = true;
                     b_found = true;
                 }
+            }
+
+            // in dialogs we do not need this enhancement
+            if (!b_delegate_enh || !b_found) {
+                le->one_time_trigger_ = false;
             }
 //            if (!b_found) {
 //                QString s = model->data(model->index(i, t_display_),
@@ -402,8 +409,12 @@ QVariant DbModelCol::comboResult (
         if (!table_->isValid())
             return result;
         int crt_idx = control->currentIndex();
-        if (crt_idx == -1)
+        if (crt_idx == -1) {
+            // this is a new one
+            result = DbModelCol::comboInsert (
+                    top_model, control->currentText());
             break;
+        }
 
 #if 1
         // see if the user is able to modify the source table
