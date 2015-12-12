@@ -1,6 +1,6 @@
 
 # enable/disable cmake debug messages related to this pile
-set (DBMODEL_DEBUG_MSG ON)
+set (DBMODEL_DEBUG_MSG OFF)
 
 # make sure support code is present; no harm
 # in including it twice; the user, however, should have used
