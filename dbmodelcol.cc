@@ -154,7 +154,6 @@ public slots:
     }
 };
 
-
 #include "dbmodelcol.moc"
 
 /*  DEFINITIONS    ========================================================= */

@@ -29,7 +29,7 @@ macro    (dbmodelInit
         "dbmodelprivate.cc"
         "dbmodelcol.cc")
     set(DBMODEL_QT_MODS
-        Core Sql)
+        Core Sql Widgets)
 
     pileSetSources(
         "${DBMODEL_INIT_NAME}"
@@ -41,7 +41,7 @@ macro    (dbmodelInit
         "0;0;1;d"
         "ON"
         "${ref_cnt_use_mode}"
-        ""
+        "DbStruct"
         "category1"
         "tag1;tag2")
 
