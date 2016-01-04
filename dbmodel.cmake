@@ -28,7 +28,7 @@ macro    (dbmodelInit
         "dbmodeltbl.cc"
         "dbmodelprivate.cc"
         "dbmodelcol.cc")
-    set(DBDELEGATE_QT_MODS
+    set(DBMODEL_QT_MODS
         Core Sql)
 
     pileSetSources(
