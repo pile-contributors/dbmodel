@@ -291,7 +291,7 @@ bool DbModelCol::setCombo (
             break;
         }
 
-        QSqlTableModel * model = table_->model;
+        QSqlTableModel * model = table_->sqlModel();
         bool b_found = false;
 
         if (original_.foreign_behaviour_ == DbColumn::FB_CHOOSE_ADD) {
@@ -349,7 +349,7 @@ bool DbModelCol::setCombo (
             DBMODEL_DEBUGM("The key <%s> was not found in related "
                            "<%s> model\n",
                            TMP_A(key.toString()),
-                           TMP_A(table_->meta->tableName()));
+                           TMP_A(table_->tableName()));
             break;
         }
 
@@ -373,9 +373,9 @@ QVariant DbModelCol::comboInsert (
         // then we will save that record's id
         DbRecMap map;
         map.insert(original_.foreign_ref_, value);
-        DbRecord * rec = table_->meta->createDefaultRecord ();
+        DbRecord * rec = table_->metadata()->createDefaultRecord ();
         rec->retreive (map);
-        if (!rec->save (table_->meta, top_model->database()->database())) {
+        if (!rec->save (table_->metadata(), top_model->database()->database())) {
             delete rec;
             DBMODEL_DEBUGM("Could not save new value in "
                            "reference table\n");
@@ -387,7 +387,7 @@ QVariant DbModelCol::comboInsert (
         result = map.value (original_.foreign_key_);
 
         // re-select the model to acknoledge the new value
-        table_->model->select();
+        table_->sqlModel()->select();
 
         break;
     }
@@ -433,7 +433,7 @@ QVariant DbModelCol::comboResult (
         }
 
         // just save the key in main model if this is an existing value
-        QSqlRecord rec = table_->model->record (crt_idx);
+        QSqlRecord rec = table_->sqlModel()->record (crt_idx);
         result = rec.value (t_primary_);
 
 #else

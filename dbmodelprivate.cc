@@ -70,7 +70,7 @@
  * \param meta table to be loaded (NULL can be used to allow later initialization
  * \param parent the parent QObject
  */
-DbModelPrivate::DbModelPrivate(DbStruct * db, DbTaew * meta, QObject * parent) :
+DbModelPrivate::DbModelPrivate(DbStruct * db, DbTaew * meta, DbModel * parent) :
     QAbstractTableModel(parent),
     db_(db),
     mapping_(),
@@ -93,7 +93,7 @@ DbModelPrivate::DbModelPrivate(DbStruct * db, DbTaew * meta, QObject * parent) :
  * \param component table to be loaded (-1 can be used to allow later initialization
  * \param parent the parent QObject
  */
-DbModelPrivate::DbModelPrivate(DbStruct * db, int component, QObject * parent) :
+DbModelPrivate::DbModelPrivate(DbStruct * db, int component, DbModel * parent) :
     QAbstractTableModel(parent),
     db_(db),
     mapping_(),
@@ -121,6 +121,15 @@ DbModelPrivate::~DbModelPrivate()
     terminateMeta ();
     setDatabase(NULL);
     DBMODEL_TRACE_EXIT;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+DbModel * DbModelPrivate::parentDbModel() const
+{
+    DbModel * result = qobject_cast<DbModel *>(parent ());
+    assert(result != NULL);
+    return result;
 }
 /* ========================================================================= */
 
@@ -190,7 +199,7 @@ bool DbModelPrivate::selectMe ()
     beginResetModel ();
     bool b_ret = true;
     foreach(const DbModelTbl & tbl, tables_) {
-        QSqlTableModel * model = tbl.model;
+        QSqlTableModel * model = tbl.sqlModel ();
         if (model == NULL) {
             b_ret = false;
         } else {
@@ -283,7 +292,7 @@ bool DbModelPrivate::setFilter (const QString & filter, int table_index)
             break;
         }
 
-        QSqlTableModel * model = tables_[table_index].model;
+        QSqlTableModel * model = tables_[table_index].sqlModel ();
         if (model == NULL) {
             DBMODEL_DEBUGM("Table %d is invalid\n",
                            table_index);
@@ -349,7 +358,7 @@ bool DbModelPrivate::setOrder (int column, Qt::SortOrder order, int table_index)
             break;
         }
 
-        QSqlTableModel * model = tables_[table_index].model;
+        QSqlTableModel * model = tables_[table_index].sqlModel ();
         if (model == NULL) {
             DBMODEL_DEBUGM("Table %d is invalid\n",
                            table_index);
@@ -368,7 +377,13 @@ bool DbModelPrivate::setOrder (int column, Qt::SortOrder order, int table_index)
             model->sort (c.mainTableRealIndex(), order);
         }
 
+
+
+
     /** @todo */
+
+
+
 
         b_ret = true;
         break;
@@ -416,7 +431,7 @@ int DbModelPrivate::findTable (const QString &table) const
 {
     int i_max = tables_.count();
     for (int i = 0; i < i_max; ++i) {
-        if (!tables_.at(i).meta->tableName().compare (table, Qt::CaseInsensitive)) {
+        if (!tables_.at(i).metadata()->tableName().compare (table, Qt::CaseInsensitive)) {
             return i;
         }
     }
@@ -687,7 +702,7 @@ bool DbModelPrivate::removeRows (int row, int count, const QModelIndex &)
 {
     if (!isValid())
         return false;
-    if (tables_.first().model->removeRows (row, count)) {
+    if (tables_.first().sqlModel()->removeRows (row, count)) {
         DBMODEL_DEBUGM ("%d row(s) removed starting at %d\n", count, row);
         return true;
     } else {
@@ -731,28 +746,31 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
         }
 
 
-        if (role != Qt::DisplayRole)
-            if (role != Qt::EditRole)
-                break;
-
         if (!validateIndex (idx))
             break;
 
         // data for this column in main table
-#ifdef DBMODEL_DEBUG
-        if (idx.column() == 1) {
-            int i = 1;
-        }
-#endif
         const DbModelCol & column = mapping_.at(idx.column());
         const DbColumn & colorig = column.original_;
         QVariant main_value;
-        QSqlTableModel * main_model = tables_.first().model;
+        const DbModelTbl & main_table = tables_.first();
+        QSqlTableModel * main_model = main_table.sqlModel();
         if (main_model == NULL)
             break;
 
-        // if this is a virtual column we need the index of the original column
-        if (colorig.isVirtual()) {
+        if (colorig.isDynamic ()) {
+            // for now we can only use dynamic columns on first level
+            // but the user may set the callback for related tables.
+            QSqlRecord rec = main_model->record (idx.row());
+            return column.original_.kbData (*main_table.metadata(),
+                                            rec,
+                                            role,
+                                            parentDbModel ());
+        } else if (colorig.isVirtual()) {
+            if (role != Qt::DisplayRole)
+                if (role != Qt::EditRole)
+                    break;
+            // if this is a virtual column we need the index of the original column
             assert(colorig.virtrefcol_ >= 0);
             assert(colorig.virtrefcol_ < mapping_.count());
 
@@ -763,6 +781,9 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
                             idx.row(),
                             ref_col.mainTableRealIndex ()));
         } else {
+            if (role != Qt::DisplayRole)
+                if (role != Qt::EditRole)
+                    break;
             // Get the value stored on this column (may be actual
             // value or the key in a foreign table.
             main_value = main_model->data (
@@ -781,7 +802,7 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
         }
 
         // we have a value that is an index in another table
-        QSqlTableModel * model = column.table_->model;
+        QSqlTableModel * model = column.table_->sqlModel();
         if (model == NULL)
             break;
         // DbTaew * meta = column.table_->meta;
@@ -813,7 +834,7 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
 #               else
                 // format the data according to the rules for source column
                 main_value = formattedData (
-                            column.table_->meta->columnCtor (column.t_display_),
+                            column.table_->column (column.t_display_),
                             main_value);
 #               endif
                 break;
@@ -1016,8 +1037,8 @@ bool DbModelPrivate::loadMeta (DbTaew * meta)
         // our table is always at position 0
         assert(tables_.count() == 0);
         DbModelTbl this_table;
-        this_table.model = main;
-        this_table.meta = meta;
+        this_table.setSqlModel (main);
+        this_table.setMetadata (meta);
         tables_.append (this_table);
 
         // create the columns as we go
@@ -1035,7 +1056,7 @@ bool DbModelPrivate::loadMeta (DbTaew * meta)
                                    "(column %s - %d)\n", TMP_A(col.col_name_), i);
                     continue;
                 }
-                loc_col.label_ = loc_col.table_->meta->columnLabel (i);
+                loc_col.label_ = loc_col.table_->columnLabel (i);
                 //setHeaderData(col_idx, Qt::Vertical, QString("X %1").arg (col_idx));
                 mapping_.append (loc_col);
                 ++col_idx;
@@ -1070,7 +1091,7 @@ const DbModelTbl & DbModelPrivate::table (const QString & name)
     // attempt to locate it
     int i = 0;
     foreach(const DbModelTbl & titer, tables_) {
-        if (!titer.meta->tableName().compare(name)) {
+        if (!titer.tableName().compare(name)) {
             assert(i != 0);
             // The method is used to find related tables.
             // A table should not have a relation with itself (is unnatural :).
@@ -1081,14 +1102,15 @@ const DbModelTbl & DbModelPrivate::table (const QString & name)
 
     // not found so add a new one
     DbModelTbl new_tbl;
-    new_tbl.meta = db_->metaDatabase ()->taew (name);
-    if (new_tbl.meta == NULL) {
-        new_tbl.model = NULL;
+    DbTaew * intermed = db_->metaDatabase ()->taew (name);
+    if (intermed == NULL) {
+        new_tbl.setSqlModel (NULL);
         DBMODEL_DEBUGM("The database does not contain a table called %s\n",
                        TMP_A(name));
     } else {
-        new_tbl.model = new_tbl.meta->sqlModel (db_->database(), this);
+        new_tbl.setSqlModel (intermed->sqlModel (db_->database(), this));
     }
+    new_tbl.setMetadata (intermed);
     tables_.append (new_tbl);
 
     DBMODEL_TRACE_EXIT;
@@ -1103,14 +1125,7 @@ void DbModelPrivate::clearTables ()
     int i_max = tables_.count();
     for (int i = 0; i < i_max; ++i) {
         DbModelTbl & crt = tables_[i];
-        if (crt.meta != NULL) {
-            delete crt.meta;
-            crt.meta = NULL;
-        }
-        if (crt.model != NULL) {
-            crt.model->deleteLater ();
-            crt.model = NULL;
-        }
+        crt.destroy();
     }
     tables_.clear();
     mapping_.clear();
@@ -1128,12 +1143,12 @@ void DbModelPrivate::addForeignKeyColumn (
     const DbModelTbl & secondary = table (col.foreign_table_);
     int key_col = -1;
     if (secondary.isValid()) {
-        key_col = secondary.meta->realColumnIndex (col.foreign_key_);
+        key_col = secondary.metadata()->realColumnIndex (col.foreign_key_);
         if (key_col == -1) {
             DBMODEL_DEBUGM("Key column %s was not "
                            "found in table %s\n",
                            TMP_A(col.foreign_key_),
-                           TMP_A(secondary.meta->tableName()));
+                           TMP_A(secondary.metadata()->tableName()));
         }
     }
 
@@ -1141,13 +1156,13 @@ void DbModelPrivate::addForeignKeyColumn (
     DbModelCol loc_col (col, col_idx, secondary);
     if (secondary.isValid() && (key_col != -1)) {
         loc_col.t_primary_ = key_col;
-        loc_col.t_display_ = secondary.meta->realColumnIndex (
+        loc_col.t_display_ = secondary.metadata()->realColumnIndex (
                     col.foreign_ref_);
         if (loc_col.t_display_ == -1) {
             DBMODEL_DEBUGM("Display column %s was not "
                            "found in table %s or is virtual\n",
                            TMP_A(col.foreign_ref_),
-                           TMP_A(secondary.meta->tableName()));
+                           TMP_A(secondary.metadata()->tableName()));
             loc_col.t_display_ = key_col;
         }
     } else {
@@ -1156,7 +1171,7 @@ void DbModelPrivate::addForeignKeyColumn (
         // No further intervention is required.
     }
 
-    loc_col.label_ = tables_.at (0).meta->columnLabel (
+    loc_col.label_ = tables_.at (0).metadata()->columnLabel (
                 loc_col.mainTableVirtualIndex ());
 
     mapping_.append (loc_col);
@@ -1186,7 +1201,7 @@ void DbModelPrivate::reloadHeaders ()
         DbModelCol & coldata = mapping_[i];
         // const DbColumn & col = coldata.original_;
 
-        coldata.label_ = tables_.at (0).meta->columnLabel (
+        coldata.label_ = tables_.at (0).columnLabel (
                         coldata.mainTableVirtualIndex());
     }
     endResetModel();
@@ -1225,10 +1240,64 @@ bool DbModelPrivate::setCurrentMarker (int row, int column)
 //        }
 
         // save the values
-        col_highlite_ = row;
-        row_highlite_ = column;
+        col_highlite_ = column;
+        row_highlite_ = row;
 
         b_ret = true;
+        break;
+    }
+    return b_ret;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbModelPrivate::setColumnCallback (
+        int table_index, int column_index, DbColumn::Callback value,
+        void * user_data)
+{
+    bool b_ret = false;
+    for (;;) {
+        if ((table_index < 0) || (table_index >= tables_.count())) {
+            DBMODEL_DEBUGM("Can't set callback for column; index %d "
+                           "is out of valid range [0, %d) for tables\n",
+                           table_index, tables_.count());
+            break;
+        }
+
+        DbModelTbl & tbl = tables_[table_index];
+        b_ret = tbl.setColumnCallback (column_index, value);
+
+        /// @todo the cells in main table are also stored locally;
+        /// this is a design flaw as we should only store a reference
+        /// in DbModelCol.
+        if (b_ret && (table_index == 0)) {
+            mapping_[column_index].original_.format_.callback_ = value;
+        }
+
+        user_data_ = user_data;
+        break;
+    }
+    return b_ret;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+DbColumn::Callback DbModelPrivate::columnCallback (
+        int table_index, int column_index)
+{
+    DbColumn::Callback b_ret = NULL;
+    for (;;) {
+
+        if ((table_index < 0) || (table_index >= tables_.count())) {
+            DBMODEL_DEBUGM("Can't get callback for column; index %d "
+                           "is out of valid range [0, %d) for tables\n",
+                           table_index, tables_.count());
+            break;
+        }
+
+        const DbModelTbl & tbl = tables_.at (table_index);
+        b_ret = tbl.columnCallback (column_index);
+
         break;
     }
     return b_ret;

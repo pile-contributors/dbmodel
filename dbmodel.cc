@@ -333,6 +333,31 @@ void DbModel::reloadHeaders ()
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+bool DbModel::setColumnCallback (
+        int table_index, int column_index,
+        DbColumn::Callback value, void * user_data)
+{
+    return impl->setColumnCallback (
+                table_index, column_index, value, user_data);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+DbColumn::Callback DbModel::columnCallback (
+        int table_index, int column_index)
+{
+    return impl->columnCallback (table_index, column_index);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+void * DbModel::columnCallbackData ()
+{
+    return impl->columnCallbackData ();
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
 /**
  * The method checks the input against current valid range and stores the
  * coordinates of the cell to highlite with a different color and icon.
@@ -343,7 +368,7 @@ void DbModel::reloadHeaders ()
  */
 bool DbModel::setCurrentMarker (int row, int column)
 {
-    return impl->setCurrentMarker (column, row);
+    return impl->setCurrentMarker (row, column);
 }
 /* ========================================================================= */
 

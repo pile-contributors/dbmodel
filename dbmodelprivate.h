@@ -103,6 +103,7 @@ private:
     QList<DbModelTbl> tables_; /**< the list of tables referenced by this model */
     int row_highlite_; /**< the row for the cell to highlite */
     int col_highlite_; /**< the column for the cell to highlite */
+    void * user_data_; /**< data send along on column callbacks */
 
     /*  DATA    ============================================================ */
     //
@@ -117,18 +118,22 @@ public:
     DbModelPrivate(
             DbStruct * db,
             DbTaew * meta,
-            QObject * parent = NULL);
+            DbModel * parent);
 
     //! Create a new model from a database and an index.
     DbModelPrivate (
             DbStruct * db,
             int component,
-            QObject * parent = NULL);
+            DbModel * parent);
 
     Q_DISABLE_COPY(DbModelPrivate)
 
     //! destructor
     virtual ~DbModelPrivate();
+
+    //! Get the front-end model.
+    DbModel *
+    parentDbModel () const;
 
     //! Is this a valid model (with a table set) or not?
     bool
@@ -157,8 +162,8 @@ public:
     takeMeta () {
         if (tables_.count() == 0)
             return NULL;
-        DbTaew * result = tables_.first().meta;
-        tables_.first().meta = NULL;
+        DbTaew * result = tables_.first().metadata();
+        tables_.first().setMetadata (NULL);
         terminateMeta ();
         col_highlite_ = -1;
         row_highlite_ = -1;
@@ -170,7 +175,7 @@ public:
     metaTaew () const {
         if (tables_.count() == 0)
             return NULL;
-        return tables_.at (0).meta;
+        return tables_.at (0).metadata();
     }
 
     //! Get a pointer to internal main model object.
@@ -178,7 +183,7 @@ public:
     mainModel () const {
         if (tables_.count() == 0)
             return NULL;
-        return tables_.at (0).model;
+        return tables_.at (0).sqlModel ();
     }
 
     //! Select the model (retreive information using options).
@@ -397,6 +402,23 @@ public:
     ///@}
     /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
 
+
+    bool
+    setColumnCallback (
+            int table_index,
+            int column_index,
+            DbColumn::Callback value,
+            void *user_data);
+
+    DbColumn::Callback
+    columnCallback (
+            int table_index,
+            int column_index);
+
+    void *
+    columnCallbackData() {
+        return user_data_;
+    }
 
 private:
 

@@ -25,6 +25,8 @@
 
 #include <dbmodel/dbmodel-config.h>
 #include <dbstruct/dbtaew.h>
+#include <dbstruct/dbcolumn.h>
+#include <assert.h>
 
 /*  INCLUDES    ============================================================ */
 //
@@ -56,10 +58,9 @@ class DBMODEL_EXPORT DbModelTbl
     //
     /*  DATA    ------------------------------------------------------------ */
 
-public:
-
-    DbTaew * meta; /**< metadata about main table or view */
-    QSqlTableModel * model; /**< the undelying model */
+    DbTaew * meta_; /**< metadata about main table or view */
+    QList<DbColumn> columns_; /**< cached list of columns */
+    QSqlTableModel * model_; /**< the undelying model */
 
     /*  DATA    ============================================================ */
     //
@@ -84,8 +85,82 @@ public:
     //! Tell if this instance is valid (found in database).
     bool
     isValid () const {
-        return model != NULL;
+        return model_ != NULL;
     }
+
+    //! Metadata about main table or view
+    DbTaew * metadata () const {
+        return meta_; }
+
+    //! Set metadata about main table or view.
+    void setMetadata (DbTaew * value) {
+        meta_ = value;
+        constructColumns ();
+    }
+
+    //! The undelying model.
+    QSqlTableModel * sqlModel () const {
+        return model_; }
+
+    //! Set the undelying model.
+    void setSqlModel (QSqlTableModel * value) {
+        model_ = value;
+    }
+
+    //! Get the column for a particular index.
+    const DbColumn & column (int colidx) const {
+        assert((colidx >= 0) && (colidx < columns_.count()));
+        return columns_.at (colidx);
+    }
+
+    //! Get the column for a particular index.
+    const QString & columnLabel (int colidx) const {
+        assert((colidx >= 0) && (colidx < columns_.count()));
+        return columns_.at (colidx).col_label_;
+    }
+
+    //! Set callback for a column.
+    bool
+    setColumnCallback (
+            int column_index,
+            DbColumn::Callback value);
+
+    //! Get callback for a column.
+    DbColumn::Callback
+    columnCallback (
+            int column_index) const;
+
+    //! Get the column for a particular index.
+    QString tableName () const {
+        if (meta_ == NULL) return QString ();
+        return meta_->tableName();
+    }
+
+    //! Number of rows in the sql model.
+    int
+    rowCount () const;
+
+    //! Data from the sql model.
+    QVariant
+    data (
+            int row,
+            int column,
+            int role = Qt::DisplayRole) const;
+
+    //! Convert the index of a column to real index.
+    int
+    toRealIndex (
+            int value) const;
+
+    //! Clear internal components.
+    void
+    destroy ();
+
+private:
+
+    //! Create thhe list of columns.
+    void
+    constructColumns ();
 
     /*  FUNCTIONS    ======================================================= */
     //

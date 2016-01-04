@@ -112,7 +112,6 @@ public:
     }
 
 
-
     //! Set a combobox to work with this column's data.
     bool
     setCombo (

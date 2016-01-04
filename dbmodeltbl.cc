@@ -21,7 +21,9 @@
 //
 /*  INCLUDES    ------------------------------------------------------------ */
 
+#include "dbmodelprivate.h"
 #include "dbmodeltbl.h"
+#include <QSqlTableModel>
 
 /*  INCLUDES    ============================================================ */
 //
@@ -50,9 +52,136 @@
 /* ------------------------------------------------------------------------- */
 DbModelTbl::DbModelTbl (
         DbTaew * meta_part, QSqlTableModel * model_part) :
-    meta(meta_part),
-    model(model_part)
+    meta_(meta_part),
+    columns_(),
+    model_(model_part)
 {
+
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+bool DbModelTbl::setColumnCallback (int column_index, DbColumn::Callback value)
+{
+    bool b_ret = false;
+    for (;;) {
+
+        if (meta_ == NULL) {
+            DBMODEL_DEBUGM("Can't set callback for column; no metadata\n");
+            break;
+        }
+
+        if ((column_index < 0) || (column_index >= columns_.count())) {
+            DBMODEL_DEBUGM("Can't set callback for column; index %d "
+                           "is out of valid range [0, %d) for columns\n",
+                           column_index, columns_.count());
+            break;
+        }
+
+        DbColumn & col = columns_[column_index];
+        if (!col.isDynamic ()) {
+            DBMODEL_DEBUGM("Can't set callback for column %d; not dynamic\n",
+                           column_index);
+            break;
+        }
+
+        col.format_.callback_ = value;
+
+        b_ret = true;
+        break;
+    }
+    return b_ret;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+DbColumn::Callback DbModelTbl::columnCallback (int column_index) const
+{
+    DbColumn::Callback b_ret = NULL;
+    for (;;) {
+
+        if (meta_ == NULL) {
+            DBMODEL_DEBUGM("Can't get callback for column; no metadata\n");
+            break;
+        }
+
+        if ((column_index < 0) || (column_index >= columns_.count())) {
+            DBMODEL_DEBUGM("Can't get callback for column; index %d "
+                           "is out of valid range [0, %d) for columns\n",
+                           column_index, columns_.count());
+            break;
+        }
+
+        const DbColumn & col = columns_.at(column_index);
+        if (!col.isDynamic ()) {
+            DBMODEL_DEBUGM("Can't get callback for column %d; not dynamic\n",
+                           column_index);
+            break;
+        }
+
+        b_ret = col.format_.callback_;
+        break;
+    }
+    return b_ret;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+int DbModelTbl::rowCount() const
+{
+    if (model_ == NULL)
+        return 0;
+    return model_->rowCount ();
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+void DbModelTbl::destroy()
+{
+    if (meta_ != NULL) {
+        delete meta_;
+        meta_ = NULL;
+    }
+    if (model_ != NULL) {
+        model_->deleteLater ();
+        model_ = NULL;
+    }
+    columns_.clear();
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+QVariant DbModelTbl::data (int row, int column, int role) const
+{
+    if (model_ == NULL)
+        return QVariant();
+    return model_->data (
+                model_->index (
+                    row, column), role);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+int DbModelTbl::toRealIndex (int value) const
+{
+    if (meta_ == NULL) {
+        return NULL;
+    }
+    return meta_->toRealIndex (value);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+void DbModelTbl::constructColumns ()
+{
+    columns_.clear();
+    if (meta_ == NULL)
+        return;
+
+    int i_max = meta_->columnCount ();
+    for (int i = 0; i < i_max; ++i) {
+        columns_.append (meta_->columnCtor (i));
+    }
 }
 /* ========================================================================= */
 

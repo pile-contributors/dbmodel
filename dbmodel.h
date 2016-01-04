@@ -168,6 +168,33 @@ public:
     reloadHeaders ();
 
 
+    //! Set the callback for a column in a table.
+    bool
+    setColumnCallback (
+            int table_index,
+            int column_index,
+            DbColumn::Callback value,
+            void * user_data = NULL);
+
+    //! Set the callback for a column in main table.
+    bool
+    setColumnCallback (
+            int column_index,
+            DbColumn::Callback value,
+            void * user_data = NULL) {
+        return setColumnCallback (0, column_index, value, user_data);
+    }
+
+    //! Get the callback for a cell.
+    DbColumn::Callback
+    columnCallback (
+            int table_index,
+            int column_index);
+
+    //! Get the callback for a cell.
+    void *
+    columnCallbackData ();
+
     /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
     /** @name Marker
     * A cell may be highlited in a different color and with
