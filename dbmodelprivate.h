@@ -453,6 +453,7 @@ private:
     //
     //
     //
+public: virtual void anchorVtable() const;
 }; /* class DbModelPrivate */
 
 /*  CLASS    =============================================================== */

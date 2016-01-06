@@ -423,3 +423,5 @@ bool DbModel::hasMarkerCell () const
     return impl->hasMarkerCell ();
 }
 /* ========================================================================= */
+
+void DbModel::anchorVtable() const {}

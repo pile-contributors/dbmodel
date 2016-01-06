@@ -147,7 +147,7 @@ public:
         DbModel * top_model,
         QCheckBox * control) const;
 
-    //! Prepare a checkbox to handle tristaed values.
+    //! Prepare a check-box to handle tristated values.
     bool
     setTristate (
         QCheckBox *control,
@@ -171,6 +171,7 @@ public:
     //
     //
     //
+public: virtual void anchorVtable() const;
 }; /* class DbModelCol */
 
 /*  CLASS    =============================================================== */
@@ -183,5 +184,3 @@ public:
 #endif // DBMODELCOL_H
 /* ------------------------------------------------------------------------- */
 /* ========================================================================= */
-
-

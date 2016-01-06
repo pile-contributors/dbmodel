@@ -53,13 +53,13 @@ public:
     isValid() const;
 
     //! Set the table or view; old instance is deleted;
-    //! ovnership of table is assumed.
+    //! ownership of table is assumed.
     void
     setMeta (
             DbTaew * meta);
 
     //! Set the database and table or view; old instance is deleted;
-    //! ovnership of table is assumed.
+    //! ownership of table is assumed.
     void
     setMeta (
             DbStruct * database,
@@ -82,11 +82,11 @@ public:
     selectMe ();
 
     //! Number of rows.
-    int
+    virtual int
     rowCount () const;
 
     //! Number of columns.
-    int
+    virtual int
     columnCount () const;
 
     //! Custom sorting.
@@ -197,7 +197,7 @@ public:
 
     /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
     /** @name Marker
-    * A cell may be highlited in a different color and with
+    * A cell may be highlighted in a different color and with
     * a special icon; the model only stores the coordinates
     * of that cell.
     */
@@ -209,21 +209,22 @@ public:
         int row,
         int column);
 
-    //! Retrieve highlite row.
+    //! Retrieve highlight row.
     int
     getMarkerRow () const;
 
-    //! Retrieve highlite column.
+    //! Retrieve highlight column.
     int
     getMarkerCol () const;
 
-    //! Tell if we have a highlite cell set.
+    //! Tell if we have a highlight cell set.
     bool
     hasMarkerCell () const;
 
     ///@}
     /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
 
+public: virtual void anchorVtable() const;
 };
 
 #endif // GUARD_DBMODEL_H_INCLUDE

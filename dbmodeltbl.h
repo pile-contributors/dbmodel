@@ -158,7 +158,7 @@ public:
 
 private:
 
-    //! Create thhe list of columns.
+    //! Create the list of columns.
     void
     constructColumns ();
 
@@ -167,6 +167,7 @@ private:
     //
     //
     //
+public: virtual void anchorVtable() const;
 }; /* class DbModelTbl */
 
 /*  CLASS    =============================================================== */
@@ -179,5 +180,3 @@ private:
 #endif // DBMODELTBL_H
 /* ------------------------------------------------------------------------- */
 /* ========================================================================= */
-
-
