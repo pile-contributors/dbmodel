@@ -77,7 +77,7 @@ public:
     QSqlTableModel *
     mainModel () const;
 
-    //! Select the model (retreive information using options).
+    //! Select the model (retrieve information using options).
     bool
     selectMe ();
 
@@ -96,7 +96,7 @@ public:
         const QModelIndex &right) const;
 
 
-    //! Retreive the database. Ownership of returned pointer stays
+    //! Retrieve the database. Ownership of returned pointer stays
     //! with this instance.
     DbStruct *
         database () const;
@@ -209,11 +209,11 @@ public:
         int row,
         int column);
 
-    //! Retreive highlite row.
+    //! Retrieve highlite row.
     int
     getMarkerRow () const;
 
-    //! Retreive highlite column.
+    //! Retrieve highlite column.
     int
     getMarkerCol () const;
 

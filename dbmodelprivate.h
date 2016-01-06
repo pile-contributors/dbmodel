@@ -99,7 +99,7 @@ private:
 
     DbStruct * db_; /**< The database we're connecting to. */
     QList<DbModelCol> mapping_; /**< one entry for each column mapping between
-                             user-indices and internal models */
+                             user-indexes and internal models */
     QList<DbModelTbl> tables_; /**< the list of tables referenced by this model */
     int row_highlite_; /**< the row for the cell to highlite */
     int col_highlite_; /**< the column for the cell to highlite */
@@ -186,7 +186,7 @@ public:
         return tables_.at (0).sqlModel ();
     }
 
-    //! Select the model (retreive information using options).
+    //! Select the model (retrieve information using options).
     bool
     selectMe ();
 
@@ -198,7 +198,7 @@ public:
     int
     columnCount () const;
 
-    //! Retreive the database. Ownership of returned pointer stays
+    //! Retrieve the database. Ownership of returned pointer stays
     //! with this instance.
     inline DbStruct *
         database () const {
@@ -381,13 +381,13 @@ public:
         int row,
         int column);
 
-    //! Retreive highlite row.
+    //! Retrieve highlite row.
     inline int
     getMarkerRow () const {
         return row_highlite_;
     }
 
-    //! Retreive highlite column.
+    //! Retrieve highlite column.
     inline int
     getMarkerCol () const {
         return col_highlite_;

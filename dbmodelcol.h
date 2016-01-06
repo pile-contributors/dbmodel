@@ -119,7 +119,7 @@ public:
         const QVariant & key,
         bool b_delegate_enh = true) const;
 
-    //! Retreives the value and saves it back in the model.
+    //! Retrieves the value and saves it back in the model.
     bool
     getComboValue (
         const QModelIndex & index,
@@ -140,7 +140,7 @@ public:
 
 
 
-    //! Retreives the value and saves it back in the model.
+    //! Retrieves the value and saves it back in the model.
     bool
     getTristateValue (
         const QModelIndex & index,
