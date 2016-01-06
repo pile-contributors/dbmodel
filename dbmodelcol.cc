@@ -373,7 +373,7 @@ QVariant DbModelCol::comboInsert (
         DbRecMap map;
         map.insert(original_.foreign_ref_, value);
         DbRecord * rec = table_->metadata()->createDefaultRecord ();
-        rec->retreive (map);
+        rec->retrieve (map);
         if (!rec->save (table_->metadata(), top_model->database()->database())) {
             delete rec;
             DBMODEL_DEBUGM("Could not save new value in "
@@ -459,7 +459,7 @@ QVariant DbModelCol::comboResult (
                 DbRecMap map;
                 map.insert(original_.foreign_key_, control->currentText());
                 DbRecord * rec = table_->meta->createDefaultRecord ();
-                rec->retreive (map);
+                rec->retrieve (map);
                 if (!rec->save (table_->meta, top_model->database()->database())) {
                     delete rec;
                     DBMODEL_DEBUGM("TCould not save new value in "
@@ -539,7 +539,7 @@ bool DbModelCol::getTristateValue (
 //
 //
 //
-
+void DbModelCol::anchorVtable() const {}
 /* ------------------------------------------------------------------------- */
 /* ========================================================================= */
 

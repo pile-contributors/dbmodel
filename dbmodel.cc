@@ -49,7 +49,7 @@ DbModel::DbModel(DbStruct * db, DbTaew * meta, QObject * parent) :
 
 /* ------------------------------------------------------------------------- */
 /**
- * This constructor variant uses the database to retreive the main table.
+ * This constructor variant uses the database to retrieve the main table.
  * The `component` must be a valid index for `DbStructMeta::taew()`.
  *
  * \param db the database to use (NULL can be used to allow later initialization
@@ -423,3 +423,5 @@ bool DbModel::hasMarkerCell () const
     return impl->hasMarkerCell ();
 }
 /* ========================================================================= */
+
+void DbModel::anchorVtable() const {}

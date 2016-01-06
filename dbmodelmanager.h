@@ -81,7 +81,7 @@ public:
     static void
     end ();
 
-    //! Retreive icon marker.
+    //! Retrieve icon marker.
     static const QIcon &
     getIcon () {
         return uniq_->crt_icon_marker_;
@@ -93,7 +93,7 @@ public:
         uniq_->crt_icon_marker_ = value;
     }
 
-    //! Retreive color marker.
+    //! Retrieve color marker.
     static const QColor &
     getColor () {
         return uniq_->crt_color_marker_;
@@ -121,6 +121,7 @@ private:
     //
     //
     //
+public: virtual void anchorVtable() const;
 }; /* class DbModelManager */
 
 /*  CLASS    =============================================================== */
