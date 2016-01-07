@@ -136,7 +136,7 @@ DbModel * DbModelPrivate::parentDbModel() const
 /* ------------------------------------------------------------------------- */
 /**
  * A call to this functionammounts to a complete change in the data that is
- * displayied. It is a shortcut for destroying the model and creating a new
+ * displayed. It is a shortcut for destroying the model and creating a new
  * one for another table.
  *
  * The database is assumed to stay the same. The function fails if there is
@@ -161,7 +161,7 @@ void DbModelPrivate::setMeta (DbTaew * meta)
 /* ------------------------------------------------------------------------- */
 /**
  * A call to this functionammounts to a complete change in the data that is
- * displayied. It is a shortcut for destroying the model and creating a new
+ * displayed. It is a shortcut for destroying the model and creating a new
  * one for another table.
  *
  * The database if first changed. If the database is valid we proceed to

@@ -19,6 +19,7 @@
 #include <QSortFilterProxyModel>
 #include <QSqlDatabase>
 #include <QVector>
+#include <QModelIndex>
 
 class DbModelPrivate;
 
@@ -88,6 +89,20 @@ public:
     //! Number of columns.
     virtual int
     columnCount () const;
+
+    //! Number of rows.
+    virtual int
+    rowCount (
+            const QModelIndex & idx) const {
+        return QSortFilterProxyModel::rowCount (idx);
+    }
+
+    //! Number of columns.
+    virtual int
+    columnCount (
+            const QModelIndex & idx) const {
+        return QSortFilterProxyModel::columnCount (idx);
+    }
 
     //! Custom sorting.
     bool

@@ -293,7 +293,7 @@ bool DbModelCol::setCombo (
         QSqlTableModel * model = table_->sqlModel();
         bool b_found = false;
 
-        if (original_.foreign_behaviour_ == DbColumn::FB_CHOOSE_ADD) {
+        if (original_.foreign_behavior_ == DbColumn::FB_CHOOSE_ADD) {
             // foreign keys allowed to edit
             control->setEditable (true);
             control->setInsertPolicy (QComboBox::InsertAtBottom);
@@ -417,7 +417,7 @@ QVariant DbModelCol::comboResult (
 
 #if 1
         // see if the user is able to modify the source table
-        if (original_.foreign_behaviour_ == DbColumn::FB_CHOOSE_ADD) {
+        if (original_.foreign_behavior_ == DbColumn::FB_CHOOSE_ADD) {
             QString user_text = control->currentText();
             QString prev_text = control->itemText (crt_idx);
 
@@ -437,7 +437,7 @@ QVariant DbModelCol::comboResult (
 
 #else
         // see if the user is able to modify the source table
-        if (original_.foreign_behaviour_ == DbColumn::FB_CHOOSE_ADD) {
+        if (original_.foreign_behavior_ == DbColumn::FB_CHOOSE_ADD) {
 
             // did the user actually added a new thingy?
             QComboBox::InsertPolicy ip = control->insertPolicy();
