@@ -60,7 +60,7 @@ class DBMODEL_EXPORT DbModelTbl
 
     DbTaew * meta_; /**< metadata about main table or view */
     QList<DbColumn> columns_; /**< cached list of columns */
-    QSqlTableModel * model_; /**< the undelying model */
+    QSqlTableModel * model_; /**< the underlying model */
 
     /*  DATA    ============================================================ */
     //
@@ -98,11 +98,11 @@ public:
         constructColumns ();
     }
 
-    //! The undelying model.
+    //! The underlying model.
     QSqlTableModel * sqlModel () const {
         return model_; }
 
-    //! Set the undelying model.
+    //! Set the underlying model.
     void setSqlModel (QSqlTableModel * value) {
         model_ = value;
     }
@@ -118,6 +118,10 @@ public:
         assert((colidx >= 0) && (colidx < columns_.count()));
         return columns_.at (colidx).col_label_;
     }
+
+    //! Re-acquire the labels (maybe in the new language).
+    void
+    retrieveLabels ();
 
     //! Set callback for a column.
     bool

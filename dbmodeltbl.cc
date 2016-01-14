@@ -61,6 +61,16 @@ DbModelTbl::DbModelTbl (
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+void DbModelTbl::retrieveLabels ()
+{
+    int i_max = meta_->columnCount ();
+    for (int i = 0; i < i_max; ++i) {
+        columns_[i].col_label_ = meta_->columnLabel (i);
+    }
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
 bool DbModelTbl::setColumnCallback (int column_index, DbColumn::Callback value)
 {
     bool b_ret = false;

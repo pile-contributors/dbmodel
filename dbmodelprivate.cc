@@ -1197,6 +1197,7 @@ void DbModelPrivate::reloadHeaders ()
 {
     beginResetModel();
     int i_max = mapping_.count();
+    tables_[0].retrieveLabels ();
     for (int i = 0; i < i_max; ++i) {
         DbModelCol & coldata = mapping_[i];
         // const DbColumn & col = coldata.original_;
