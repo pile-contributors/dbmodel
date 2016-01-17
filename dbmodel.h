@@ -188,20 +188,20 @@ public:
     setColumnCallback (
             int table_index,
             int column_index,
-            DbColumn::Callback value,
+            DbColKb value,
             void * user_data = NULL);
 
     //! Set the callback for a column in main table.
     bool
     setColumnCallback (
             int column_index,
-            DbColumn::Callback value,
+            DbColKb value,
             void * user_data = NULL) {
         return setColumnCallback (0, column_index, value, user_data);
     }
 
     //! Get the callback for a cell.
-    DbColumn::Callback
+    DbColKb
     columnCallback (
             int table_index,
             int column_index);

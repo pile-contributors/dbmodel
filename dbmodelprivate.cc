@@ -472,7 +472,7 @@ Qt::ItemFlags DbModelPrivate::flags (const QModelIndex &idx) const
         DbModelCol column = mapping_.at (idx.column());
 
         // Only allow editing if this is allowed in the model
-        if (!column.original_.read_only_) {
+        if (!column.original_.readOnly ()) {
             result = result | Qt::ItemIsEditable;
         }
 
@@ -502,28 +502,28 @@ QVariant DbModelPrivate::formattedData (
     return colorig.formattedData (original_value);
 #if 0
     QVariant result = original_value;
-    switch (colorig.datatype_) {
-    case DbColumn::DTY_DATE: {
+    switch (colorig.columnType ()) {
+    case DbDataType::DTY_DATE: {
         // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
         result = result.toDate().toString(
                     QCoreApplication::translate("UserTime", "yyyy-MMM-dd"));
         break; }
-    case DbColumn::DTY_TIME: {
+    case DbDataType::DTY_TIME: {
         // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
         result = result.toTime().toString(
             QCoreApplication::translate(
                 "UserTime", "h:mm:ss"));
         break; }
-    case DbColumn::DTY_DATETIME: {
+    case DbDataType::DTY_DATETIME: {
         // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
         result = result.toDateTime().toString(
                 QCoreApplication::translate(
                     "UserTime", "yyyy-MMM-dd h:mm:ss"));
         break; }
-    case DbColumn::DTY_SMALLINT:
-    case DbColumn::DTY_BIGINT:
-    case DbColumn::DTY_TINYINT:
-    case DbColumn::DTY_INTEGER: {
+    case DbDataType::DTY_SMALLINT:
+    case DbDataType::DTY_BIGINT:
+    case DbDataType::DTY_TINYINT:
+    case DbDataType::DTY_INTEGER: {
         if (!colorig.original_format_.isEmpty()) {
             result = QString("%1").arg(
                         result.toLongLong(),
@@ -532,14 +532,14 @@ QVariant DbModelPrivate::formattedData (
                         colorig.fill_char_);
         }
         break; }
-    case DbColumn::DTY_REAL:
-    case DbColumn::DTY_MONEY:
-    case DbColumn::DTY_SMALLMONEY:
-    case DbColumn::DTY_NUMERIC:
-    case DbColumn::DTY_NUMERICSCALE:
-    case DbColumn::DTY_FLOAT:
-    case DbColumn::DTY_DECIMALSCALE:
-    case DbColumn::DTY_DECIMAL: {
+    case DbDataType::DTY_REAL:
+    case DbDataType::DTY_MONEY:
+    case DbDataType::DTY_SMALLMONEY:
+    case DbDataType::DTY_NUMERIC:
+    case DbDataType::DTY_NUMERICSCALE:
+    case DbDataType::DTY_FLOAT:
+    case DbDataType::DTY_DECIMALSCALE:
+    case DbDataType::DTY_DECIMAL: {
         if (!colorig.original_format_.isEmpty()) {
             result = QString("%1").arg(
                         result.toReal(),
@@ -549,7 +549,7 @@ QVariant DbModelPrivate::formattedData (
                         colorig.fill_char_);
         }
         break;}
-    case DbColumn::DTY_BIT: {
+    case DbDataType::DTY_BIT: {
         switch (colorig.format_.bit_) {
         case DbColumn::BF_YES_CAMEL: {
             result = result.toBool() ?
@@ -613,7 +613,7 @@ QVariant DbModelPrivate::formattedData (
         }
 
         break;}
-    case DbColumn::DTY_TRISTATE: {
+    case DbDataType::DTY_TRISTATE: {
         switch (colorig.format_.bit_) {
         case DbColumn::BF_YES_CAMEL: {
             result = tristateToString (
@@ -739,7 +739,7 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
             QVariant editdata = data(idx, Qt::EditRole);
             if (editdata.isNull()) {
                 // return QColor(224, 235, 235); // bluish
-                return QColor(255, 242, 229); // redish
+                return QColor(255, 242, 229); // reddish
             } else {
                 break;
             }
@@ -1029,7 +1029,7 @@ bool DbModelPrivate::loadMeta (DbTaew * meta)
         // There's going to be at least this many columns.
         mapping_.reserve (meta->columnCount ());
 
-        // inform underlyng table about the table we're gonna use
+        // inform underlying table about the table we're gonna use
         QSqlTableModel * main = new QSqlTableModel (this, db_->database());
         main->setTable (meta->tableName());
         main->setEditStrategy (QSqlTableModel::OnFieldChange);
@@ -1050,10 +1050,11 @@ bool DbModelPrivate::loadMeta (DbTaew * meta)
                 addForeignKeyColumn (col, col_idx);
             } else {
                 DbModelCol loc_col (col, col_idx, tables_.first());
-                loc_col.t_display_ = col.real_col_id_;
+                loc_col.t_display_ = col.columnRealId();
                 if (loc_col.t_display_  == -1) {
                     DBMODEL_DEBUGM("Cannot use virtual column as display "
-                                   "(column %s - %d)\n", TMP_A(col.col_name_), i);
+                                   "(column %s - %d)\n",
+                                   TMP_A(col.columnName()), i);
                     continue;
                 }
                 loc_col.label_ = loc_col.table_->columnLabel (i);
@@ -1253,7 +1254,7 @@ bool DbModelPrivate::setCurrentMarker (int row, int column)
 
 /* ------------------------------------------------------------------------- */
 bool DbModelPrivate::setColumnCallback (
-        int table_index, int column_index, DbColumn::Callback value,
+        int table_index, int column_index, DbColKb value,
         void * user_data)
 {
     bool b_ret = false;
@@ -1283,10 +1284,10 @@ bool DbModelPrivate::setColumnCallback (
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
-DbColumn::Callback DbModelPrivate::columnCallback (
+DbColKb DbModelPrivate::columnCallback (
         int table_index, int column_index)
 {
-    DbColumn::Callback b_ret = NULL;
+    DbColKb b_ret = NULL;
     for (;;) {
 
         if ((table_index < 0) || (table_index >= tables_.count())) {

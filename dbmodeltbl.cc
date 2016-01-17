@@ -71,7 +71,7 @@ void DbModelTbl::retrieveLabels ()
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
-bool DbModelTbl::setColumnCallback (int column_index, DbColumn::Callback value)
+bool DbModelTbl::setColumnCallback (int column_index, DbColKb value)
 {
     bool b_ret = false;
     for (;;) {
@@ -105,9 +105,9 @@ bool DbModelTbl::setColumnCallback (int column_index, DbColumn::Callback value)
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
-DbColumn::Callback DbModelTbl::columnCallback (int column_index) const
+DbColKb DbModelTbl::columnCallback (int column_index) const
 {
-    DbColumn::Callback b_ret = NULL;
+    DbColKb b_ret = NULL;
     for (;;) {
 
         if (meta_ == NULL) {

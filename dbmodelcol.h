@@ -157,12 +157,12 @@ public:
 
     int
     mainTableRealIndex () const {
-        return original_.real_col_id_;
+        return original_.columnRealId();
     }
 
     int
     mainTableVirtualIndex () const {
-        return original_.col_id_;
+        return original_.columnId();
     }
 
 

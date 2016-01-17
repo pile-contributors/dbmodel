@@ -335,7 +335,7 @@ void DbModel::reloadHeaders ()
 /* ------------------------------------------------------------------------- */
 bool DbModel::setColumnCallback (
         int table_index, int column_index,
-        DbColumn::Callback value, void * user_data)
+        DbColKb value, void * user_data)
 {
     return impl->setColumnCallback (
                 table_index, column_index, value, user_data);
@@ -343,7 +343,7 @@ bool DbModel::setColumnCallback (
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
-DbColumn::Callback DbModel::columnCallback (
+DbColKb DbModel::columnCallback (
         int table_index, int column_index)
 {
     return impl->columnCallback (table_index, column_index);

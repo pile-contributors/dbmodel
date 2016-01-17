@@ -407,10 +407,10 @@ public:
     setColumnCallback (
             int table_index,
             int column_index,
-            DbColumn::Callback value,
+            DbColKb value,
             void *user_data);
 
-    DbColumn::Callback
+    DbColKb
     columnCallback (
             int table_index,
             int column_index);

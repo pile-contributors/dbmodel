@@ -26,6 +26,9 @@
 #include <dbmodel/dbmodel-config.h>
 #include <dbstruct/dbtaew.h>
 #include <dbstruct/dbcolumn.h>
+#if DBSTRUCT_MAJOR_VERSION >= 1
+#include <dbstruct/dbdatatype.h>
+#endif
 #include <assert.h>
 
 /*  INCLUDES    ============================================================ */
@@ -116,7 +119,7 @@ public:
     //! Get the column for a particular index.
     const QString & columnLabel (int colidx) const {
         assert((colidx >= 0) && (colidx < columns_.count()));
-        return columns_.at (colidx).col_label_;
+        return columns_.at (colidx).columnLabel ();
     }
 
     //! Re-acquire the labels (maybe in the new language).
@@ -127,10 +130,10 @@ public:
     bool
     setColumnCallback (
             int column_index,
-            DbColumn::Callback value);
+            DbColKb value);
 
     //! Get callback for a column.
-    DbColumn::Callback
+    DbColKb
     columnCallback (
             int column_index) const;
 
