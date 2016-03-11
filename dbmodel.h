@@ -23,6 +23,12 @@
 
 class DbModelPrivate;
 
+QT_BEGIN_NAMESPACE
+class QSqlQueryModel;
+class QSqlTableModel;
+class QAbstractItemView;
+QT_END_NAMESPACE
+
 //! A Qt model capable of representing sql tables.
 class DBMODEL_EXPORT DbModel : public QSortFilterProxyModel  {
     Q_OBJECT
@@ -238,6 +244,25 @@ public:
 
     ///@}
     /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
+
+
+    static int
+    findById (
+            QAbstractItemModel * m,
+            long id,
+            int col_id = 0);
+
+    static int
+    findById (
+            QAbstractItemView *view,
+            long id,
+            int col_id = 0);
+
+    static int
+    selectById (
+            QAbstractItemView *view,
+            long id,
+            int col_id = 0);
 
 public: virtual void anchorVtable() const;
 };

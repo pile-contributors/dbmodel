@@ -17,6 +17,9 @@
 #include <QSql>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QSqlQueryModel>
+#include <QAbstractItemView>
+#include <QItemSelectionModel>
 
 #include <assert.h>
 
@@ -423,5 +426,61 @@ bool DbModel::hasMarkerCell () const
     return impl->hasMarkerCell ();
 }
 /* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+int DbModel::findById (
+        QAbstractItemModel *model, long id, int col_id)
+{
+    int i_ret = -1;
+    for (;;) {
+        if (model == NULL) {
+            break;
+        }
+
+        int i_max = model->rowCount ();
+        for (int i = 0; i < i_max; ++i) {
+            int idcrt = static_cast<long>(
+                        model->index (i, col_id).data (Qt::EditRole).toLongLong ());
+            if (id == idcrt) {
+                i_ret = i;
+                break;
+            }
+        }
+
+        break;
+    }
+    return i_ret;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+int DbModel::findById (
+        QAbstractItemView *view, long id, int col_id)
+{
+    return findById (view->model (), id, col_id);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+int DbModel::selectById (
+        QAbstractItemView *view, long id, int col_id)
+{
+    QItemSelectionModel * smodel = view->selectionModel();
+    if (smodel == NULL) {
+        return -1;
+    }
+
+    int row = findById (view, id, col_id);
+    QModelIndex mi;
+    if (row != -1) {
+        mi = view->model ()->index (row, 0);
+    }
+    smodel->setCurrentIndex (mi,
+                         QItemSelectionModel::SelectCurrent |
+                         QItemSelectionModel::Rows);
+    return row;
+}
+/* ========================================================================= */
+
 
 void DbModel::anchorVtable() const {}
