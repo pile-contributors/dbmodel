@@ -21,13 +21,15 @@ macro    (dbmodelInit
         "dbmodelmanager.h"
         "dbmodel.h"
         "dbmodeltbl.h"
-        "dbmodelcol.h")
+        "dbmodelcol.h"
+        "dbcheckproxy.h")
     set(DBMODEL_SOURCES
         "dbmodelmanager.cc"
         "dbmodel.cc"
         "dbmodeltbl.cc"
         "dbmodelprivate.cc"
-        "dbmodelcol.cc")
+        "dbmodelcol.cc"
+        "dbcheckproxy.cc")
     set(DBMODEL_QT_MODS
         Core Sql Widgets)
 
