@@ -75,8 +75,9 @@ DbModelPrivate::DbModelPrivate(DbStruct * db, DbTaew * meta, DbModel * parent) :
     db_(db),
     mapping_(),
     tables_(),
+    row_highlite_(-1),
     col_highlite_(-1),
-    row_highlite_(-1)
+    user_data_(NULL)
 {
     DBMODEL_TRACE_ENTRY;
     loadMeta (meta);
@@ -98,8 +99,9 @@ DbModelPrivate::DbModelPrivate(DbStruct * db, int component, DbModel * parent) :
     db_(db),
     mapping_(),
     tables_(),
+    row_highlite_(-1),
     col_highlite_(-1),
-    row_highlite_(-1)
+    user_data_(NULL)
 {
     DBMODEL_TRACE_ENTRY;
     DbTaew * meta = NULL;
