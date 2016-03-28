@@ -499,12 +499,12 @@ QString tristateToString (
 #endif
 /* ------------------------------------------------------------------------- */
 QVariant DbModelPrivate::formattedData (
-        const DbColumn & colorig, const QVariant & original_value)
+        const DbColumn & col_meta, const QVariant & original_value)
 {
-    return colorig.formattedData (original_value);
+    return col_meta.formattedData (original_value);
 #if 0
     QVariant result = original_value;
-    switch (colorig.columnType ()) {
+    switch (col_meta.columnType ()) {
     case DbDataType::DTY_DATE: {
         // see [here](http://doc.qt.io/qt-5/qdatetime.html#toString)
         result = result.toDate().toString(
@@ -526,12 +526,12 @@ QVariant DbModelPrivate::formattedData (
     case DbDataType::DTY_BIGINT:
     case DbDataType::DTY_TINYINT:
     case DbDataType::DTY_INTEGER: {
-        if (!colorig.original_format_.isEmpty()) {
+        if (!col_meta.original_format_.isEmpty()) {
             result = QString("%1").arg(
                         result.toLongLong(),
-                        colorig.format_.width_,
-                        colorig.precision_,
-                        colorig.fill_char_);
+                        col_meta.format_.width_,
+                        col_meta.precision_,
+                        col_meta.fill_char_);
         }
         break; }
     case DbDataType::DTY_REAL:
@@ -542,17 +542,17 @@ QVariant DbModelPrivate::formattedData (
     case DbDataType::DTY_FLOAT:
     case DbDataType::DTY_DECIMALSCALE:
     case DbDataType::DTY_DECIMAL: {
-        if (!colorig.original_format_.isEmpty()) {
+        if (!col_meta.original_format_.isEmpty()) {
             result = QString("%1").arg(
                         result.toReal(),
-                        colorig.format_.width_,
-                        colorig.nr_format_,
-                        colorig.precision_,
-                        colorig.fill_char_);
+                        col_meta.format_.width_,
+                        col_meta.nr_format_,
+                        col_meta.precision_,
+                        col_meta.fill_char_);
         }
         break;}
     case DbDataType::DTY_BIT: {
-        switch (colorig.format_.bit_) {
+        switch (col_meta.format_.bit_) {
         case DbColumn::BF_YES_CAMEL: {
             result = result.toBool() ?
                         QCoreApplication::translate("DbModel", "Yes") :
@@ -610,13 +610,13 @@ QVariant DbModelPrivate::formattedData (
             break; }
         default: // DbColumn::BF_STRING_ON
             result = result.toBool() ?
-                        colorig.original_format_ :
+                        col_meta.original_format_ :
                         QString();
         }
 
         break;}
     case DbDataType::DTY_TRISTATE: {
-        switch (colorig.format_.bit_) {
+        switch (col_meta.format_.bit_) {
         case DbColumn::BF_YES_CAMEL: {
             result = tristateToString (
                         result.toInt(),
@@ -686,7 +686,7 @@ QVariant DbModelPrivate::formattedData (
         default: // DbColumn::BF_STRING_ON
             result = tristateToString (
                         result.toInt(),
-                        colorig.original_format_,
+                        col_meta.original_format_,
                         QString());
         }
 
@@ -720,6 +720,7 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
 {
     for (;;) {
 
+        // Deal with the highlite cell to get that out of the way.
         if ((idx.row() == row_highlite_) && (idx.column() == col_highlite_)) {
             if (role == Qt::DecorationRole) {
                 return QVariant (DbModelManager::getIcon ());
@@ -728,6 +729,8 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
             }
         }
 
+        // Read-only columns have distinctive colors; otherwise we
+        // use default processing for these characteristics.
         if (role == Qt::TextColorRole) {
             // read-only items are shown in a lighter font
             Qt::ItemFlags flgs = flags (idx);
@@ -747,20 +750,24 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
             }
         }
 
-
+        // Make sure the index is within legal boundaries.
         if (!validateIndex (idx))
             break;
 
-        // data for this column in main table
-        const DbModelCol & column = mapping_.at(idx.column());
-        const DbColumn & colorig = column.original_;
-        QVariant main_value;
+        // Get the metadata about this column from main table.
+        const DbModelCol & column = mapping_.at (idx.column());
+        const DbColumn & col_meta = column.original_;
+
+        // Get main table model and its sql backend.
         const DbModelTbl & main_table = tables_.first();
-        QSqlTableModel * main_model = main_table.sqlModel();
+        QSqlTableModel * main_model = main_table.sqlModel ();
+
+        // Degenerate case.
+        QVariant result;
         if (main_model == NULL)
             break;
 
-        if (colorig.isDynamic ()) {
+        if (col_meta.isDynamic ()) {
             // for now we can only use dynamic columns on first level
             // but the user may set the callback for related tables.
             QSqlRecord rec = main_model->record (idx.row());
@@ -768,39 +775,42 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
                                             rec,
                                             role,
                                             parentDbModel ());
-        } else if (colorig.isVirtual()) {
-            if (role != Qt::DisplayRole)
-                if (role != Qt::EditRole)
-                    break;
-            // if this is a virtual column we need the index of the original column
-            assert(colorig.virtrefcol_ >= 0);
-            assert(colorig.virtrefcol_ < mapping_.count());
-
-            // get the key in foreign table
-            const DbModelCol & ref_col = mapping_.at(colorig.virtrefcol_);
-            main_value = main_model->data (
-                        main_model->index (
-                            idx.row(),
-                            ref_col.mainTableRealIndex ()));
         } else {
+            // We only service these roles from hereon now.
             if (role != Qt::DisplayRole)
                 if (role != Qt::EditRole)
                     break;
-            // Get the value stored on this column (may be actual
-            // value or the key in a foreign table.
-            main_value = main_model->data (
-                        main_model->index (
-                            idx.row(),
-                            column.mainTableRealIndex ()));
+
+            if (col_meta.isVirtual ()) {
+
+                // if this is a virtual column we need the index of the original column
+                assert(col_meta.virtrefcol_ >= 0);
+                assert(col_meta.virtrefcol_ < mapping_.count());
+
+                // get the key in foreign table
+                const DbModelCol & ref_col = mapping_.at(col_meta.virtrefcol_);
+                result = main_model->data (
+                            main_model->index (
+                                idx.row(),
+                                ref_col.mainTableRealIndex ()));
+            } else {
+                // Get the value stored on this column (may be actual
+                // value or the key in a foreign table.
+                result = main_model->data (
+                            main_model->index (
+                                idx.row(),
+                                column.mainTableRealIndex ()));
+            }
         }
 
-        // for simple cases this is it
+        // For edit role we return raw data.
         if (role == Qt::EditRole) {
-            return main_value;
+            return result;
         }
 
-        if (!column.isForeign()) {
-            return formattedData (colorig, main_value);
+        // If the column is not foreign we have the result.
+        if (!column.isForeign ()) {
+            return formattedData (col_meta, result);
         }
 
         // we have a value that is an index in another table
@@ -816,10 +826,10 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
             QVariant iter_key = model->data (
                         model->index(i, column.t_primary_),
                         Qt::EditRole);
-            // did we found it? (ineficient)
-            if (iter_key == main_value) {
+            // did we found it? (inefficient)
+            if (iter_key == result) {
 
-                main_value = model->data (
+                result = model->data (
                             model->index(i, column.t_display_),
                             Qt::DisplayRole);
 #               if 0
@@ -831,21 +841,21 @@ QVariant DbModelPrivate::data (const QModelIndex & idx, int role) const
                 // We need to perform two passes in python,
                 // - once collecting data
                 // - once for generating content
-                main_value = formattedData (
-                            colorig, main_value);
+                result = formattedData (
+                            col_meta, result);
 #               else
                 // format the data according to the rules for source column
-                main_value = formattedData (
+                result = formattedData (
                             column.table_->column (column.t_display_),
-                            main_value);
+                            result);
 #               endif
                 break;
             }
         }
 
         // return model->data (model->index(row, idx_mcol));
-        // DBMODEL_DEBUGM("DbModelPrivate::data = %s\n", TMP_A(main_value.toString()));
-        return main_value;
+        // DBMODEL_DEBUGM("DbModelPrivate::data = %s\n", TMP_A(result.toString()));
+        return result;
     }
     return QVariant ();
 }
