@@ -165,6 +165,13 @@ public:
         return original_.columnId();
     }
 
+    bool
+    setColumnCallback (
+            DbColKb value);
+
+    DbColKb
+    columnCallback () const;
+
 
     /*  FUNCTIONS    ======================================================= */
     //

@@ -24,6 +24,7 @@
 /*  INCLUDES    ------------------------------------------------------------ */
 
 #include <dbmodel/dbmodel-config.h>
+#include <dbmodel/dbmodelcol.h>
 #include <dbstruct/dbtaew.h>
 #include <dbstruct/dbcolumn.h>
 #if DBSTRUCT_MAJOR_VERSION >= 1
@@ -38,6 +39,8 @@
 //
 /*  DEFINITIONS    --------------------------------------------------------- */
 
+class DbModelPrivate;
+
 /*  DEFINITIONS    ========================================================= */
 //
 //
@@ -46,13 +49,14 @@
 /*  CLASS    --------------------------------------------------------------- */
 
 //! Table data is stored only once with multiple references from columns.
-class DBMODEL_EXPORT DbModelTbl
-{
+class DBMODEL_EXPORT DbModelTbl {
     //
     //
     //
     //
     /*  DEFINITIONS    ----------------------------------------------------- */
+
+    friend class DbModelPrivate;
 
     /*  DEFINITIONS    ===================================================== */
     //
@@ -62,8 +66,9 @@ class DBMODEL_EXPORT DbModelTbl
     /*  DATA    ------------------------------------------------------------ */
 
     DbTaew * meta_; /**< metadata about main table or view */
-    QList<DbColumn> columns_; /**< cached list of columns */
     QSqlTableModel * model_; /**< the underlying model */
+    QList<DbModelCol> mapping_; /**< one entry for each column mapping between
+                             user-indexes and internal models */
 
     /*  DATA    ============================================================ */
     //
@@ -75,7 +80,7 @@ class DBMODEL_EXPORT DbModelTbl
 public:
 
     //! Constructor.
-    DbModelTbl() {}
+    DbModelTbl();
 
     //! Constructor.
     DbModelTbl (
@@ -91,6 +96,13 @@ public:
         return model_ != NULL;
     }
 
+    //! Tell if an index is valid.
+    bool
+    isColIndexValid (
+            int idx) const {
+        return ((idx >= 0) && (idx <mapping_.count ()));
+    }
+
     //! Metadata about main table or view
     DbTaew * metadata () const {
         return meta_; }
@@ -98,7 +110,6 @@ public:
     //! Set metadata about main table or view.
     void setMetadata (DbTaew * value) {
         meta_ = value;
-        constructColumns ();
     }
 
     //! The underlying model.
@@ -111,16 +122,10 @@ public:
     }
 
     //! Get the column for a particular index.
-    const DbColumn & column (int colidx) const {
-        assert((colidx >= 0) && (colidx < columns_.count()));
-        return columns_.at (colidx);
-    }
+    const DbColumn & column (int colidx) const;
 
     //! Get the column for a particular index.
-    const QString & columnLabel (int colidx) const {
-        assert((colidx >= 0) && (colidx < columns_.count()));
-        return columns_.at (colidx).columnLabel ();
-    }
+    const QString & columnLabel (int colidx) const;
 
     //! Re-acquire the labels (maybe in the new language).
     void
@@ -143,6 +148,10 @@ public:
         return meta_->tableName();
     }
 
+    //! Total number of columns (including virtual).
+    int
+    columnCount () const;
+
     //! Number of rows in the sql model.
     int
     rowCount () const;
@@ -150,9 +159,15 @@ public:
     //! Data from the sql model.
     QVariant
     data (
+            const DbModelPrivate* mp,
             int row,
             int column,
             int role = Qt::DisplayRole) const;
+
+    //! Get the model data regarding a column; index is a real index.
+    const DbModelCol &
+    columnData (
+        int index) const;
 
     //! Convert the index of a column to real index.
     int
@@ -163,11 +178,34 @@ public:
     void
     destroy ();
 
-private:
+    //! Set the label for a column.
+    bool
+    setHeaderData (
+            int section,
+            Qt::Orientation orientation,
+            const QVariant & value,
+            int role);
+
+    //! Get data.
+    QVariant
+    data (
+            int row,
+            int col,
+            int role = Qt::EditRole);
+
+protected:
 
     //! Create the list of columns.
     void
-    constructColumns ();
+    constructColumns (
+            DbModelPrivate* mp);
+
+    //! Create all entries for foreign keys and add them to the list.
+    void
+    addForeignKeyColumn (
+            const DbColumn & col,
+            int & col_idx,
+            DbModelPrivate* mp);
 
     /*  FUNCTIONS    ======================================================= */
     //

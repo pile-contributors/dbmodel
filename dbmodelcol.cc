@@ -273,6 +273,33 @@ bool DbModelCol::setTristate (
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+bool DbModelCol::setColumnCallback (
+        DbColumn::Callback value)
+{
+    if (!original_.isDynamic ()) {
+        DBMODEL_DEBUGM("Can't set callback for column %d; not dynamic\n",
+                       user_index_);
+        return false;
+    }
+    original_.format_.callback_ = value;
+    return true;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+DbColumn::Callback DbModelCol::columnCallback () const
+{
+    if (!original_.isDynamic ()) {
+        DBMODEL_DEBUGM("Can't get callback for column %d; not dynamic\n",
+                       user_index_);
+        return NULL;
+    }
+
+    return original_.format_.callback_;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
 bool DbModelCol::setCombo (
         QComboBox *control, const QVariant & key, bool b_delegate_enh) const
 {

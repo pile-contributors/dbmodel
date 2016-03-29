@@ -98,8 +98,6 @@ class DbModelPrivate : public QAbstractTableModel {
 private:
 
     DbStruct * db_; /**< The database we're connecting to. */
-    QList<DbModelCol> mapping_; /**< one entry for each column mapping between
-                             user-indexes and internal models */
     QList<DbModelTbl> tables_; /**< the list of tables referenced by this model */
     int row_highlite_; /**< the row for the cell to highlite */
     int col_highlite_; /**< the column for the cell to highlite */
@@ -144,13 +142,13 @@ public:
     }
 
     //! Set the table or view; old instance is deleted;
-    //! ovnership of table is assumed.
+    //! ownership of table is assumed.
     void
     setMeta (
             DbTaew * meta);
 
     //! Set the database and table or view; old instance is deleted;
-    //! ovnership of table is assumed.
+    //! ownership of table is assumed.
     void
     setMeta (
             DbStruct * database,
@@ -225,10 +223,7 @@ public:
     //! Get the model data regarding a column; index is a real index.
     const DbModelCol &
     columnData (
-        int index) const {
-
-        return mapping_.at (index);
-    }
+        int index) const;
 
     //! Get the model data regarding a table.
     const DbModelTbl &
@@ -420,6 +415,11 @@ public:
         return user_data_;
     }
 
+    //! Find a table by name.
+    const DbModelTbl &
+    table (
+        const QString &name);
+
 private:
 
     //! Destroys meta object.
@@ -431,22 +431,10 @@ private:
     loadMeta (
         DbTaew * meta);
 
-    //! Find a table by name.
-    const DbModelTbl &
-    table (
-        const QString &name);
 
     //! Remove all tables (and all columns).
     void
     clearTables ();
-
-    //! Create all entries for foreign keys and add them to the list.
-    void
-    addForeignKeyColumn (
-        const DbColumn & col,
-        int & col_idx);
-
-
 
     /*  FUNCTIONS    ======================================================= */
     //
