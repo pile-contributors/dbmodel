@@ -280,7 +280,7 @@ QVariant DbModelTbl::data (
             // did we found it? (inefficient)
             if (iter_key == result) {
                 result = column.table_->data (
-                            mp, i, column.t_display_, Qt::DisplayRole);
+                            mp, i, column.t_display_, Qt::EditRole);
 //                result = model->index (i, column.t_display_)
 //                        .data (Qt::DisplayRole);
 
