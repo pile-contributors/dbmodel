@@ -20,6 +20,8 @@
 #include <QSqlQueryModel>
 #include <QAbstractItemView>
 #include <QItemSelectionModel>
+#include <QFont>
+#include <QApplication>
 
 #include <assert.h>
 
@@ -35,7 +37,9 @@ typedef QMap<int,bool>::const_iterator CheckMapCIter;
 
 DbCheckProxy::DbCheckProxy (int check_column, QObject *parent) :
     QIdentityProxyModel(parent),
-    check_column_(check_column)
+    check_column_(check_column),
+    checks_ (),
+    has_all_ (false)
 {
 
 }
@@ -62,7 +66,7 @@ void DbCheckProxy::setAllCheckMarks()
     }
 }
 
-void DbCheckProxy::clearCheckMark(int row_idx)
+void DbCheckProxy::clearCheckMark (int row_idx)
 {
     CheckMapIter cmi = checks_.find (row_idx);
     if (cmi != checks_.end ())
@@ -77,7 +81,7 @@ void DbCheckProxy::setCheckMark (int row_idx, bool b_checked)
         clearCheckMark (row_idx);
 }
 
-void DbCheckProxy::setSourceModel(QAbstractItemModel *sourceModel)
+void DbCheckProxy::setSourceModel (QAbstractItemModel *sourceModel)
 {
     check_column_ = 0;
     checks_.clear ();
@@ -93,11 +97,39 @@ QVariant DbCheckProxy::data (const QModelIndex &proxyIndex, int role) const
             break;
         return isChecked (proxyIndex.row()) ? Qt::Checked : Qt::Unchecked;
     }
-    return QAbstractProxyModel::data (proxyIndex, role);
+    if (has_all_) {
+        if (proxyIndex.row () == 0) {
+            switch (role) {
+            case Qt::DisplayRole:
+            case Qt::EditRole:
+                return QObject::tr ("All");
+            case Qt::FontRole: {
+                QFont f = QApplication::font ();
+                f.setBold (true);
+                return f;
+            }
+            };
+            return QVariant ();
+        } else {
+            return QAbstractProxyModel::index (
+                        proxyIndex.row () - 1,
+                        proxyIndex.column ()).data (role);
+        }
+    } else {
+        return QAbstractProxyModel::data (proxyIndex, role);
+    }
 }
 
-Qt::ItemFlags DbCheckProxy::flags(const QModelIndex &proxyIndex) const
+Qt::ItemFlags DbCheckProxy::flags (const QModelIndex &proxyIndex) const
 {
+    QModelIndex idx = proxyIndex;
+    for (;;) {
+        if (!has_all_)
+            break;
+        if (idx.row() == 0) {
+            /// @Todo
+        }
+    }
     for (;;) {
         if (proxyIndex.column() != check_column_)
             break;

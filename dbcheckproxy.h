@@ -36,6 +36,7 @@ class DBMODEL_EXPORT DbCheckProxy : public QIdentityProxyModel {
 
     int check_column_; /**< the index of the column where the check marks will appear */
     QMap<int,bool> checks_; /**< the list of rows and associated checked values */
+    bool has_all_; /**< shows an additional column that checks all / none */
 
 public:
 
@@ -55,6 +56,19 @@ public:
     setCheckColumn (
             int value) {
         check_column_ = value;
+    }
+
+    //! Show or hide the All row.
+    void
+    setHasAll (
+            bool value) {
+        has_all_ = value;
+    }
+
+    //! Do we show the All row?.
+    bool
+    hasAll () const {
+        return has_all_;
     }
 
     //! Tell if a certain row is checked or not.
@@ -84,14 +98,28 @@ public:
     //! Get the index of all rows that have a check mark.
     QList<int>
     checkedRows () {
-        return checks_.keys();
+        return checks_.keys ();
     }
 
 
-    virtual void setSourceModel(QAbstractItemModel *sourceModel);
-    virtual QVariant data (const QModelIndex &proxyIndex, int role = Qt::DisplayRole) const;
-    virtual Qt::ItemFlags flags(const QModelIndex &index) const;
-    virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
+    virtual void
+    setSourceModel (
+            QAbstractItemModel *sourceModel);
+
+    virtual QVariant
+    data (
+            const QModelIndex &proxyIndex,
+            int role = Qt::DisplayRole) const;
+
+    virtual Qt::ItemFlags
+    flags (
+            const QModelIndex &index) const;
+
+    virtual bool
+    setData (
+            const QModelIndex &index,
+            const QVariant &value,
+            int role = Qt::EditRole);
 
 };
 
