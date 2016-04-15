@@ -186,12 +186,12 @@ public:
             const QVariant & value,
             int role);
 
-    //! Get data.
-    QVariant
-    data (
-            int row,
-            int col,
-            int role = Qt::EditRole);
+//    //! Get data.
+//    QVariant
+//    data (
+//            int row,
+//            int col,
+//            int role = Qt::EditRole) const;
 
 protected:
 

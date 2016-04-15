@@ -216,6 +216,11 @@ public:
     void *
     columnCallbackData ();
 
+    DbModelPrivate *
+    implementation () const {
+        return impl;
+    }
+
     /*  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  */
     /** @name Marker
     * A cell may be highlighted in a different color and with
