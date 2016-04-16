@@ -85,7 +85,7 @@ void DbCheckProxy::setSourceModel (QAbstractItemModel *sourceModel)
 {
     check_column_ = 0;
     checks_.clear ();
-    QAbstractProxyModel::setSourceModel (sourceModel);
+    QIdentityProxyModel::setSourceModel (sourceModel);
 }
 
 QVariant DbCheckProxy::data (const QModelIndex &proxyIndex, int role) const
@@ -111,12 +111,12 @@ QVariant DbCheckProxy::data (const QModelIndex &proxyIndex, int role) const
             };
             return QVariant ();
         } else {
-            return QAbstractProxyModel::index (
+            return QIdentityProxyModel::index (
                         proxyIndex.row () - 1,
                         proxyIndex.column ()).data (role);
         }
     } else {
-        return QAbstractProxyModel::data (proxyIndex, role);
+        return QIdentityProxyModel::data (proxyIndex, role);
     }
 }
 
@@ -133,9 +133,9 @@ Qt::ItemFlags DbCheckProxy::flags (const QModelIndex &proxyIndex) const
     for (;;) {
         if (proxyIndex.column() != check_column_)
             break;
-        return QAbstractProxyModel::flags (proxyIndex) | Qt::ItemIsUserCheckable;
+        return QIdentityProxyModel::flags (proxyIndex) | Qt::ItemIsUserCheckable;
     }
-    return QAbstractProxyModel::flags (proxyIndex);
+    return QIdentityProxyModel::flags (proxyIndex);
 }
 
 bool DbCheckProxy::setData (const QModelIndex &proxyIndex, const QVariant &value, int role)
@@ -148,5 +148,5 @@ bool DbCheckProxy::setData (const QModelIndex &proxyIndex, const QVariant &value
         setCheckMark (proxyIndex.row(), value.toInt () == Qt::Checked);
         return true;
     }
-    return QAbstractProxyModel::setData (proxyIndex, value, role);
+    return QIdentityProxyModel::setData (proxyIndex, value, role);
 }
