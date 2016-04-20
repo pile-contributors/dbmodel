@@ -111,7 +111,7 @@ QVariant DbCheckProxy::data (const QModelIndex &proxyIndex, int role) const
             };
             return QVariant ();
         } else {
-            return QIdentityProxyModel::index (
+            return /*QIdentityProxyModel::*/index (
                         proxyIndex.row () - 1,
                         proxyIndex.column ()).data (role);
         }
