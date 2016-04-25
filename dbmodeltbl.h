@@ -186,6 +186,14 @@ public:
             const QVariant & value,
             int role);
 
+    //! Support for virtual columns.
+    QVariant
+    getRemoteData (
+            const DbModelPrivate* mp,
+            int kcol,
+            int dcol,
+            const QVariant &key) const;
+
 //    //! Get data.
 //    QVariant
 //    data (

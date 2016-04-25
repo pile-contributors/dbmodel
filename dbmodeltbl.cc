@@ -196,6 +196,39 @@ bool DbModelTbl::setHeaderData (int section, Qt::Orientation orientation, const 
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+QVariant DbModelTbl::getRemoteData (
+        const DbModelPrivate* mp, int kcol, int dcol,
+        const QVariant &key) const
+{
+    QVariant result;
+
+    if (model_ != NULL) {
+        int i_max = model_->rowCount ();
+        for (int i = 0; i < i_max; ++i) {
+            // loop-get the key
+            QVariant iter_key =
+                    model_->index (i, kcol)
+                    .data (Qt::EditRole);
+            // did we found it? (inefficient)
+            if (iter_key == key) {
+                const DbModelCol & column = mapping_.at (dcol);
+                const DbColumn & col_meta = column.original_;
+
+                int role = Qt::EditRole;
+                if (col_meta.isDynamic() || col_meta.isForeignKey ())
+                    role = Qt::DisplayRole;
+                result = data (
+                            mp, i, dcol, role);
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
 QVariant DbModelTbl::data (
         const DbModelPrivate* mp, int row, int col, int role) const
 {
@@ -236,11 +269,9 @@ QVariant DbModelTbl::data (
                     break;
 
             if (col_meta.isVirtual ()) {
-
                 // if this is a virtual column we need the index of the original column
                 assert(col_meta.virtrefcol_ >= 0);
                 assert(col_meta.virtrefcol_ < columnCount ());
-
                 // get the key in foreign table
                 const DbModelCol & ref_col = columnData (col_meta.virtrefcol_);
                 result = model_->index (
@@ -266,6 +297,13 @@ QVariant DbModelTbl::data (
             break;
         }
 
+        result = column.table_->getRemoteData (
+                    mp, column.t_primary_, column.t_display_, result);
+        if (result.isNull())
+            break;
+        result = column.table_->column (column.t_display_).
+                formattedData (result);
+#if 0
         // we have a value that is an index in another table
         QSqlTableModel * model = column.table_->sqlModel ();
         if (model == NULL)
@@ -290,7 +328,7 @@ QVariant DbModelTbl::data (
                 break;
             }
         }
-
+#endif
         break;
     }
     return result;
