@@ -121,6 +121,24 @@ public:
             const QVariant &value,
             int role = Qt::EditRole);
 
+    virtual int
+    rowCount (
+            const QModelIndex& parent = QModelIndex()) const;
+
+    virtual QModelIndex
+    index (
+            int row,
+            int column,
+            const QModelIndex& parent = QModelIndex()) const;
+
+    QModelIndex
+    mapFromSource (
+            const QModelIndex& sourceIndex) const;
+
+    QModelIndex
+    mapToSource (
+            const QModelIndex& proxyIndex) const;
+
 };
 
 #endif // GUARD_DBCHECKPROXY_H_INCLUDE

@@ -111,34 +111,48 @@ QVariant DbCheckProxy::data (const QModelIndex &proxyIndex, int role) const
             };
             return QVariant ();
         } else {
-            return /*QIdentityProxyModel::*/index (
+            return sourceModel()->index (
                         proxyIndex.row () - 1,
                         proxyIndex.column ()).data (role);
         }
     } else {
-        return QIdentityProxyModel::data (proxyIndex, role);
+        return sourceModel ()->index (
+                    proxyIndex.row (),
+                    proxyIndex.column ()).data (role);
     }
 }
 
 Qt::ItemFlags DbCheckProxy::flags (const QModelIndex &proxyIndex) const
 {
+    Qt::ItemFlags f;
     QModelIndex idx = proxyIndex;
     for (;;) {
         if (!has_all_)
             break;
         if (idx.row() == 0) {
-            /// @Todo
+            f = Qt::ItemIsEnabled |Qt::ItemNeverHasChildren | Qt::ItemIsSelectable;
+            if (check_column_ == proxyIndex.column ()) {
+                f = f | Qt::ItemIsUserCheckable;
+            }
+            return f;
+        } else {
+            f = sourceModel()->index (
+                        proxyIndex.row()-1, proxyIndex.column ())
+                    .flags ();
+            return f | Qt::ItemIsUserCheckable;
         }
     }
-    for (;;) {
-        if (proxyIndex.column() != check_column_)
-            break;
-        return QIdentityProxyModel::flags (proxyIndex) | Qt::ItemIsUserCheckable;
-    }
-    return QIdentityProxyModel::flags (proxyIndex);
+
+    f = sourceModel()->index (
+                proxyIndex.row(), proxyIndex.column ())
+            .flags ();
+    if (proxyIndex.column() == check_column_)
+        f = f | Qt::ItemIsUserCheckable;
+    return f;
 }
 
-bool DbCheckProxy::setData (const QModelIndex &proxyIndex, const QVariant &value, int role)
+bool DbCheckProxy::setData (
+        const QModelIndex &proxyIndex, const QVariant &value, int role)
 {
     for (;;) {
         if (role != Qt::CheckStateRole)
@@ -148,5 +162,55 @@ bool DbCheckProxy::setData (const QModelIndex &proxyIndex, const QVariant &value
         setCheckMark (proxyIndex.row(), value.toInt () == Qt::Checked);
         return true;
     }
-    return QIdentityProxyModel::setData (proxyIndex, value, role);
+    int row = proxyIndex.row();
+    if (has_all_) {
+        if (row == 0)
+            return false;
+        --row;
+    }
+    return sourceModel ()->setData (
+                sourceModel ()->index (
+                    row, proxyIndex.column ()),
+                value, role);
 }
+
+int DbCheckProxy::rowCount (const QModelIndex & /*parent*/) const
+{
+    int r = sourceModel ()->rowCount () + (has_all_ ? 1 : 0);
+    return r;
+}
+
+QModelIndex DbCheckProxy::index (
+        int row, int column, const QModelIndex & /*parent*/) const
+{
+    int rc = rowCount ();
+    if ((row < 0) || (row >= rc)) {
+        return QModelIndex ();
+    }
+    if ((column < 0) || (column >= columnCount ())) {
+        return QModelIndex ();
+    }
+    return createIndex (row, column);
+}
+
+QModelIndex DbCheckProxy::mapFromSource (const QModelIndex &sourceIndex) const
+{
+    int row = sourceIndex.row ();
+    if (has_all_) {
+        ++row;
+    }
+    return createIndex (row, sourceIndex.column ());
+}
+
+QModelIndex DbCheckProxy::mapToSource (const QModelIndex &proxyIndex) const
+{
+    int row = proxyIndex.row ();
+    if (has_all_) {
+        if (row == 0) {
+            return QModelIndex ();
+        }
+        --row;
+    }
+    return sourceModel()->index (row, proxyIndex.column ());
+}
+
