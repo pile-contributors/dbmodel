@@ -31,12 +31,13 @@ class QAbstractItemView;
 QT_END_NAMESPACE
 
 //! A Qt model that adds check boxes to a column.
-class DBMODEL_EXPORT DbCheckProxy : public QIdentityProxyModel {
+class DBMODEL_EXPORT DbCheckProxy : public QAbstractItemModel {
     Q_OBJECT
 
     int check_column_; /**< the index of the column where the check marks will appear */
     QMap<int,bool> checks_; /**< the list of rows and associated checked values */
     bool has_all_; /**< shows an additional column that checks all / none */
+    QAbstractItemModel * src_model_;
 
 public:
 
@@ -101,6 +102,10 @@ public:
         return checks_.keys ();
     }
 
+    QAbstractItemModel *
+    sourceModel () const {
+        return src_model_;
+    }
 
     virtual void
     setSourceModel (
@@ -109,6 +114,12 @@ public:
     virtual QVariant
     data (
             const QModelIndex &proxyIndex,
+            int role = Qt::DisplayRole) const;
+
+    virtual QVariant
+    headerData (
+            int section,
+            Qt::Orientation orientation,
             int role = Qt::DisplayRole) const;
 
     virtual Qt::ItemFlags
@@ -125,17 +136,26 @@ public:
     rowCount (
             const QModelIndex& parent = QModelIndex()) const;
 
+    virtual int
+    columnCount (
+            const QModelIndex& parent = QModelIndex()) const;
+
+
     virtual QModelIndex
     index (
             int row,
             int column,
             const QModelIndex& parent = QModelIndex()) const;
 
-    QModelIndex
+    virtual QModelIndex
+    parent (
+            const QModelIndex& child) const;
+
+    virtual QModelIndex
     mapFromSource (
             const QModelIndex& sourceIndex) const;
 
-    QModelIndex
+    virtual QModelIndex
     mapToSource (
             const QModelIndex& proxyIndex) const;
 
