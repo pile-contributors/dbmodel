@@ -95,6 +95,17 @@ void DbCheckProxy::clearCheckMark (int row_idx)
 void DbCheckProxy::setCheckMark (int row_idx, bool b_checked)
 {
     DBMODEL_TRACE_ENTRY;
+    if (has_all_) {
+        if (row_idx == 0) {
+            beginResetModel ();
+            if (b_checked)
+                setAllCheckMarks ();
+            else
+                clearAllCheckMarks ();
+            endResetModel ();
+            return;
+        }
+    }
     if (b_checked)
         checks_.insert (row_idx, true);
     else
