@@ -64,6 +64,7 @@ void DbCheckProxy::clearAllCheckMarks()
 {
     DBMODEL_TRACE_ENTRY;
     checks_.clear ();
+    allChanged ();
     DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -73,9 +74,12 @@ void DbCheckProxy::setAllCheckMarks ()
 {
     DBMODEL_TRACE_ENTRY;
     int i_max = rowCount ();
+    QList<int> ilst;
     for (int i = 0; i < i_max; ++i) {
         checks_.insert (i, true);
+        ilst.append (i);
     }
+    emit checkChange (ilst);
     DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -85,8 +89,29 @@ void DbCheckProxy::clearCheckMark (int row_idx)
 {
     DBMODEL_TRACE_ENTRY;
     CheckMapIter cmi = checks_.find (row_idx);
-    if (cmi != checks_.end ())
+    if (cmi != checks_.end ()) {
         checks_.erase (cmi);
+        oneChanged (row_idx);
+    }
+    DBMODEL_TRACE_EXIT;
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+void DbCheckProxy::setCheckMarkInternal (int row_idx)
+{
+    DBMODEL_TRACE_ENTRY;
+    for (;;) {
+        CheckMapIter cmi = checks_.find (row_idx);
+        if (cmi != checks_.end ()) {
+            if (cmi.value())
+                break;
+        }
+
+        checks_.insert (row_idx, true);
+        oneChanged (row_idx);
+        break;
+    }
     DBMODEL_TRACE_EXIT;
 }
 /* ========================================================================= */
@@ -107,7 +132,7 @@ void DbCheckProxy::setCheckMark (int row_idx, bool b_checked)
         }
     }
     if (b_checked)
-        checks_.insert (row_idx, true);
+        setCheckMarkInternal (row_idx);
     else
         clearCheckMark (row_idx);
     DBMODEL_TRACE_EXIT;
@@ -333,4 +358,23 @@ QModelIndex DbCheckProxy::mapToSource (const QModelIndex &proxyIndex) const
 /* ========================================================================= */
 
 /* ------------------------------------------------------------------------- */
+void DbCheckProxy::allChanged ()
+{
+    QList<int> ilst;
+    int i_max = rowCount ();
+    for(int i = 0; i < i_max; ++i) {
+        ilst.append (i);
+    }
+    emit checkChange (ilst);
+}
+/* ========================================================================= */
+
+/* ------------------------------------------------------------------------- */
+void DbCheckProxy::oneChanged (int row_idx)
+{
+    QList<int> ilst;
+    ilst.append (row_idx);
+    emit checkChange (ilst);
+}
+/* ========================================================================= */
 

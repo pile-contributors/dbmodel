@@ -159,6 +159,26 @@ public:
     mapToSource (
             const QModelIndex& proxyIndex) const;
 
+private:
+
+    void
+    allChanged ();
+
+    void
+    oneChanged (
+            int row_idx);
+
+    void
+    setCheckMarkInternal (
+            int row_idx);
+
+signals:
+
+    //! Emitted when one or more items change check status.
+    void
+    checkChange (
+            QList<int> rows);
+
 };
 
 #endif // GUARD_DBCHECKPROXY_H_INCLUDE
