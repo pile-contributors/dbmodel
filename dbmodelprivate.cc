@@ -1147,7 +1147,6 @@ QSqlRecord DbModelPrivate::record (int row) const
 void DbModelPrivate::reloadHeaders ()
 {
     beginResetModel();
-    int i_max = columnCount();
     tables_[0].retrieveLabels ();
     endResetModel();
 }
