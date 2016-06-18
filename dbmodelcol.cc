@@ -398,10 +398,11 @@ QVariant DbModelCol::comboInsert (
         // we're going to insert a new record in target model
         // then we will save that record's id
         DbRecMap map;
+        QSqlDatabase db = top_model->database()->database();
         map.insert(original_.foreign_ref_, value);
         DbRecord * rec = table_->metadata()->createDefaultRecord ();
-        rec->retrieve (map);
-        if (!rec->save (table_->metadata(), top_model->database()->database())) {
+        rec->retrieve (map, db);
+        if (!rec->save (table_->metadata(), db)) {
             delete rec;
             DBMODEL_DEBUGM("Could not save new value in "
                            "reference table\n");
