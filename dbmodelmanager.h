@@ -121,7 +121,6 @@ private:
     //
     //
     //
-public: virtual void anchorVtable() const;
 }; /* class DbModelManager */
 
 /*  CLASS    =============================================================== */
