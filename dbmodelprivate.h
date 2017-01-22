@@ -61,8 +61,11 @@
 #   define TMP_A(__s__) __s__.toLatin1 ().constData ()
 #endif
 
+#ifndef BLACK_HOLE
 static inline void black_hole (...)
 {}
+#define BLACK_HOLE black_hole
+#endif
 
 /*  DEFINITIONS    ========================================================= */
 //
