@@ -78,7 +78,10 @@ void DbModelManager::end ()
 
 /* ------------------------------------------------------------------------- */
 DbModelManager::DbModelManager() :
-    crt_icon_marker_(QApplication::style()->standardIcon(QStyle::SP_MediaPlay)),
+    crt_icon_marker_(
+        QApplication::instance() == NULL ?
+            QIcon() :
+            QApplication::style()->standardIcon (QStyle::SP_MediaPlay)),
     crt_color_marker_(QColor (255, 255, 153))
 {
 }
