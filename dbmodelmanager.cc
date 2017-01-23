@@ -71,6 +71,7 @@ void DbModelManager::end ()
 
 
         delete uniq_;
+        uniq_ = NULL;
         break;
     }
 }
