@@ -14,7 +14,6 @@
 #include <dbmodel/dbmodelcol.h>
 #include <dbmodel/dbmodeltbl.h>
 
-#include <QSql>
 #include <QSqlRecord>
 #include <QSortFilterProxyModel>
 #include <QSqlDatabase>

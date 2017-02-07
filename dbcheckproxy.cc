@@ -14,7 +14,6 @@
 #include <dbstruct/dbview.h>
 #include <dbstruct/dbstruct.h>
 
-#include <QSql>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlQueryModel>

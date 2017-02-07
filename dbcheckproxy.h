@@ -16,7 +16,6 @@
 
 #include <QMap>
 #include <QList>
-#include <QSql>
 #include <QSqlRecord>
 #include <QSortFilterProxyModel>
 #include <QSqlDatabase>

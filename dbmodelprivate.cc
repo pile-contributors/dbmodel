@@ -33,7 +33,6 @@
 #include <dbmodel/dbmodelcol.h>
 #include <dbmodel/dbmodeltbl.h>
 
-#include <QSql>
 #include <QSqlTableModel>
 #include <QSqlDatabase>
 #include <QSqlError>
